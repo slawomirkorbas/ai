@@ -1,6 +1,5 @@
 package com.ai.tictactoe.model.neuralnetwork.general;
 
-import com.mxgraph.layout.mxCircleLayout;
 import com.mxgraph.layout.mxCompactTreeLayout;
 import com.mxgraph.layout.mxIGraphLayout;
 import com.mxgraph.util.mxCellRenderer;
@@ -10,7 +9,9 @@ import org.jgrapht.Graphs;
 import org.jgrapht.ext.JGraphXAdapter;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
+
 import javax.imageio.ImageIO;
+
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
@@ -21,17 +22,11 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-import static java.time.Instant.now;
 
 /**
  * Class representing neural network (ANN)
@@ -41,7 +36,7 @@ public class NeuralNetwork implements Serializable
     private static final long serialVersionUID = 1L;
 
     /** Weighted graph representing neural network **/
-    private final SimpleDirectedWeightedGraph<Neuron, DefaultWeightedEdge> net;
+    private SimpleDirectedWeightedGraph<Neuron, DefaultWeightedEdge> net;
 
     /** Default learning rate **/
     private double learningRate = 0.01;
@@ -50,6 +45,14 @@ public class NeuralNetwork implements Serializable
     @Getter
     @Setter
     private List<Layer> layers;
+
+    /**
+     * No args constructor.
+     */
+    public NeuralNetwork()
+    {
+
+    }
 
     /**
      * Default constructor
@@ -224,7 +227,6 @@ public class NeuralNetwork implements Serializable
                     net.setEdgeWeight(edge, weight - learningRate * d_Etotal_w);
                 }
             }
-
         }
     }
 
