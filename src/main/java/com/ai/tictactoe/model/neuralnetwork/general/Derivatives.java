@@ -8,6 +8,11 @@ import java.util.function.Function;
  */
 public class Derivatives
 {
+    public static final Function<Double, Double> DRELU = rel -> {
+        if( rel <= 0.0) return 0.0;
+        if( rel > 0.0)return 1.0;
+        return rel;
+    };
     public static final Function<Double, Double> DSIGMOID = sig -> sig * (1 - sig);
     public static final Function<Double, Double> DTANH    = tanh -> 1 - Math.pow(tanh,2);
 
@@ -18,6 +23,10 @@ public class Derivatives
      */
     public static Function<Double, Double> getDerivative(Function<Double, Double> hyperbolicFun)
     {
+        if(hyperbolicFun == ActivationFunction.RELU)
+        {
+            return DRELU;
+        }
         if(hyperbolicFun == ActivationFunction.SIGMOID)
         {
             return DSIGMOID;

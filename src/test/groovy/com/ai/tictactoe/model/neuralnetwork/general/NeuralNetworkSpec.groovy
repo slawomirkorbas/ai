@@ -71,7 +71,7 @@ class NeuralNetworkSpec extends Specification
 
         when:
             5.times {
-                net.train(inputs, targets) }
+                net.train(inputs, targets, 1) }
         and:
             List<Double> newOutputs = net.predict(inputs)
         then:

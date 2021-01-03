@@ -26,7 +26,7 @@ public class TicTacToeConfiguration implements WebMvcConfigurer
     TicTacToeNetwork ticTacToeNetwork()
     {
         TicTacToeNetwork ann =  new TicTacToeNetwork();
-        ann.init("neural-network-20210103-0259.ann");
+        ann.init("neural-network-20210103-1833.ann");
         //ann.init("neural-network-20210102-2049.ann");
         return ann;
     }

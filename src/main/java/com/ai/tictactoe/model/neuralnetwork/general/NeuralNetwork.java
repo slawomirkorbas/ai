@@ -136,7 +136,7 @@ public class NeuralNetwork implements Serializable
         // calculate net value and activate each neuron inside every hidden layer
         for( int i=1; i < layers.size(); i++)
         {
-            layers.get(i).doForwardPass(net);
+            layers.get(i).forwardPass(net);
         }
 
         // return neurons from the last layer (output layer)
@@ -146,10 +146,12 @@ public class NeuralNetwork implements Serializable
 
     /**
      *
+     *
      * @param inputs
      * @param targets
+     * @param sampleNumber
      */
-    public void train(final List<Integer> inputs,  final List<Double> targets)
+    public void train(final List<Integer> inputs,  final List<Double> targets, int sampleNumber)
     {
         if(layers.size() < 2 || inputs.isEmpty() || targets.isEmpty())
         {
@@ -160,7 +162,7 @@ public class NeuralNetwork implements Serializable
         predict(inputs);
 
         // Back propagation:
-        // Calculate derivative of the cost(error) function with respect to input weights of specific layer
+        // Calculate derivative of the cost(error) function with respect to input weights of specific layer's neurons
 
         // ... for the output layer and all preceding hidden layers
         for(int l = layers.size() - 1; l > 0; l-- )
@@ -170,60 +172,45 @@ public class NeuralNetwork implements Serializable
             for(int i = 0; i < currentLayer.numberOfNeurons(); i++)
             {
                 final Neuron currentNeuron = currentLayer.get(i);
-                Double d_outi_neti = null;
-                Double d_Etotal_outi = null;
-                if(currentNeuron.getOutputEdges(net).size() == 0 )
+                if( l == layers.size() - 1 ) // Output Layer:
                 {
-                    // Output Layer:
                     // Partial derivative of E (cost function value) with respect to Out (activation result(output))
                     // derivative of squared error: 0.5 * Math.pow(targets.get(i) - currentNeuron.getOutputValue(),2)
-                    d_Etotal_outi = -(targets.get(i) - currentNeuron.getOutputValue());
+                    currentNeuron.d_E_out = -(targets.get(i) - currentNeuron.getOutputValue());
 
                     // Partial derivatives of Output(activation function results) with respect to Net value of the neuron
-                    d_outi_neti = Derivatives.getDerivative(currentLayer.getActivationFunction()).apply(currentNeuron.getOutputValue());
-
-                    // save calculated partial derivatives for this neuron
-                    currentNeuron.d_out_net = d_outi_neti;
-                    currentNeuron.d_E_out = d_Etotal_outi;
+                    currentNeuron.d_out_net = Derivatives.getDerivative(currentLayer.getActivationFunction()).apply(currentNeuron.getOutputValue());
                 }
-                else
+                else // Hidden layer:
                 {
-                    // Hidden layer:
                     // Partial derivatives of Output(activation function results) with respect to Net value of the neuron
-                    d_outi_neti = Derivatives.getDerivative(currentLayer.getActivationFunction()).apply(currentNeuron.getOutputValue());
+                    currentNeuron.d_out_net = Derivatives.getDerivative(currentLayer.getActivationFunction()).apply(currentNeuron.getOutputValue());
                     List<DefaultWeightedEdge> outputEdges = currentNeuron.getOutputEdges(net);
                     for(DefaultWeightedEdge edge : outputEdges)
                     {
                         Double d_Ei_netoi = net.getEdgeTarget(edge).d_E_out * net.getEdgeTarget(edge).d_out_net;
-                        Double d_netoi_outhi = net.getEdgeWeight(edge);  // this is just "wi" (Weight) because: (wi*outhi + wj*outhj)' = wi
-                        Double d_Ei_outhi = d_Ei_netoi * d_netoi_outhi;
-                        if(d_Etotal_outi == null) {
-                            d_Etotal_outi = d_Ei_outhi;
-                        }
-                        else {
-                            d_Etotal_outi += d_Ei_outhi;
-                        }
+                        Double d_Netoi_outhi = net.getEdgeWeight(edge);  // this is just "wi" (Weight) because: (wi*outhi + wj*outhj)' = wi
+                        Double d_Ei_outhi = d_Ei_netoi * d_Netoi_outhi;
+                        currentNeuron.d_E_out = currentNeuron.d_E_out == null ? d_Ei_outhi : currentNeuron.d_E_out + d_Ei_outhi;
                     }
-
-                    // save calculated partial derivatives for this neuron
-                    currentNeuron.d_out_net = d_outi_neti;
-                    currentNeuron.d_E_out = d_Etotal_outi;
                 }
 
                 // Partial derivative of Net with respect to specific input weight (i,j)
                 // this is just Output value of the predecessor as (Net)' = (OUT_0 * W_01 + ... OUT_i * W_ij)' = OUT_0 (just constant)
                 List<Neuron> predecessors = Graphs.predecessorListOf(net, currentNeuron);
-                for( int p = 0; p < predecessors.size(); p++)
+                for(int p = 0; p < predecessors.size(); p++)
                 {
                     final Neuron predecessor = predecessors.get(p);
 
                     //Apply chaining rule to calculate d_E_w
                     Double d_net_w = predecessor.getOutputValue();
-                    Double d_Etotal_w = d_net_w * d_outi_neti * d_Etotal_outi;
+                    Double d_Etotal_w = d_net_w * currentNeuron.d_out_net * currentNeuron.d_E_out;
 
-                    // subtract calculated delta multiplied by learning rate from the weight (i,j)
+                    // subtract calculated (averaged) delta multiplied by learning rate from the weight (i,j)
                     DefaultWeightedEdge edge = net.getEdge(predecessor, currentNeuron);
                     Double weight = net.getEdgeWeight(edge);
+                    //Double avg_gradient_per_weight = currentNeuron.updateAverageGradientForWeight(edge, sampleNumber, d_Etotal_w);
+                    //net.setEdgeWeight(edge, weight - learningRate * avg_gradient_per_weight);
                     net.setEdgeWeight(edge, weight - learningRate * d_Etotal_w);
                 }
             }

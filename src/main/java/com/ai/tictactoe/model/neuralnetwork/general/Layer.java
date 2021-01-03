@@ -58,7 +58,7 @@ public class Layer implements Serializable
      * Calculate net(Z value) and activate each neuron
      * @param net - network graph
      */
-    public void doForwardPass(final SimpleDirectedWeightedGraph net)
+    public void forwardPass(final SimpleDirectedWeightedGraph net)
     {
         for(Neuron neuron : this.neuronList)
         {

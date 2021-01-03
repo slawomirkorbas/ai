@@ -1,7 +1,6 @@
 package com.ai.tictactoe.model.neuralnetwork.general;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -10,7 +9,9 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 /**
@@ -103,10 +104,10 @@ public class Neuron implements Serializable
     public Double calcNetValueFromInputs(final SimpleDirectedWeightedGraph net)
     {
         List<Neuron> predecessors = Graphs.predecessorListOf(net, this);
-        netVal = 0.00000d;
+        netVal = null;
         predecessors.forEach( n -> {
             Double weightTimesInputVal = n.getOutputValue() * net.getEdgeWeight(net.getEdge(n, this));
-            netVal += weightTimesInputVal;
+            netVal = (netVal==null ? weightTimesInputVal : netVal + weightTimesInputVal);
         });
         return netVal;
     }
@@ -121,6 +122,35 @@ public class Neuron implements Serializable
         outputValue = activationFunction.apply(netVal);
         return outputValue;
     }
+
+    /**
+     * Map of average gradients (Total error delta with respect specific input weight).
+     * Calculated (averaged) fro each input weight during training iteration of the ANN.
+     */
+    final Map<DefaultWeightedEdge, Double> avgGradientPerInputWeightMap = new HashMap<>();
+
+    /**
+     *
+     * @param inputEdge
+     * @param sampleNo
+     * @param d_Etotal_w
+     * @return
+     */
+    public Double updateAverageGradientForWeight(final DefaultWeightedEdge inputEdge,
+                                                 final int sampleNo,
+                                                 final Double d_Etotal_w)
+    {
+        Double avg_gradient_per_weight = avgGradientPerInputWeightMap.get(inputEdge);
+        if(avg_gradient_per_weight == null)
+        {
+            avg_gradient_per_weight = 0.0;
+        }
+        avg_gradient_per_weight = ((avg_gradient_per_weight + d_Etotal_w)/sampleNo);
+        avgGradientPerInputWeightMap.put(inputEdge, avg_gradient_per_weight);
+        return avg_gradient_per_weight;
+    }
+
+
 
 
 }

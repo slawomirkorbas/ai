@@ -3,7 +3,6 @@ package com.ai.tictactoe
 import com.ai.tictactoe.model.neuralnetwork.general.ActivationFunction
 import com.ai.tictactoe.model.neuralnetwork.general.NeuralNetwork
 import com.ai.tictactoe.util.BoardCell
-import spock.lang.Ignore
 import spock.lang.Specification
 
 import java.util.stream.Collectors
@@ -18,13 +17,14 @@ class TicTacToeMachineLearningSpec extends Specification
     MinMaxTicTacToeEngine playerX = new MinMaxTicTacToeEngine()
     MinMaxTicTacToeEngine playerO = new MinMaxTicTacToeEngine()
 
-    NeuralNetwork createTicTacToeNetwork(inputSize, hiddenSize, outputSize)
+    NeuralNetwork createTicTacToeNetwork()
     {
-        def learningRate = 0.1d
+        Double learningRate = 0.1d
         NeuralNetwork ann = new NeuralNetwork(learningRate)
-        ann.addLayer(inputSize, "I", null, null)
-        ann.addLayer(hiddenSize, "H", 0.1d, ActivationFunction.SIGMOID)
-        ann.addLayer(outputSize, "O", 0.1d, ActivationFunction.SIGMOID)
+        ann.addLayer(18 , "I", null, null)
+        ann.addLayer(12, "H1", 0.1d, ActivationFunction.RELU)
+        // ann.addLayer(12, "H2", 0.01d, ActivationFunction.TANH)
+        ann.addLayer(9 , "O", 0.1d, ActivationFunction.SIGMOID)
         ann
     }
 
@@ -32,44 +32,44 @@ class TicTacToeMachineLearningSpec extends Specification
     def 'train new tic-tac-toe network and serialize to file'()
     {
         given:
-            final NeuralNetwork ann = createTicTacToeNetwork(27, 36, 9)
-            Integer[] targetMoveO
-            Integer[] targetMoveX
-
+            final NeuralNetwork ann = createTicTacToeNetwork()
+            int sampleNumber = 0
+            Integer batchSize = 100
 
         when:
-            1000.times {
+            batchSize.times {
                 String[][] board = [[" ", " ", " "], [" ", " ", " "], [" ", " ", " "]]
                 String[][] invertedBoard
 
                 while(true)
                 {
                     List<BoardCell> targetMovesX = playerX.computeBestMoves(board, "x")
-                    if (targetMovesX.size() > 0) {
-                        List<Integer> input = TicTacToeNetwork.board2Inputs(board)
-                        List<Double> targetOutput = moveCords2TargetOutput(targetMovesX)
+                    if (targetMovesX.size() > 0)
+                    {
+                        List<Integer> input = TicTacToeNetwork.board2Inputs_18(board)
+                        List<Double> targetOutput = cords2TargetOutput(targetMovesX)
 
                         // perform learning iteration (prediction + back propagation)
                         //System.out.println("Train for move X. Board: " + boardToString(board))
-                        ann.train(input, targetOutput)
+                        ann.train(input, targetOutput, ++sampleNumber)
 
                         // pick randomly best move from the list of best moves collected...
                         int randomIndex = targetMovesX.size() == 1 ? 0 : (new Random()).nextInt(targetMovesX.size() - 1);
                         board[targetMovesX.get(randomIndex).row][targetMovesX.get(randomIndex).col] = "x"
 
                         // payer "O" turn...
-                        targetMoveO = playerO.findBestMove(board, "o")
-                        if (targetMoveO != null)
+                        List<BoardCell> targetMovesO = playerO.computeBestMoves(board, "o")
+                        if (targetMovesO.size() > 0)
                         {
-                            // perform learning iteration (prediction + back propagation)
-                            // for the inverted board
-                            //invertedBoard = invertBoard(board)
-                            //input = TicTacToeNetwork.board2Inputs(invertedBoard)
-                            //targetOutput = moveCordsToTargetOutput(board, targetMoveO)
+                            // perform learning iteration (prediction + back propagation) for the inverted board
+                            invertedBoard = invertBoard(board)
+                            input = TicTacToeNetwork.board2Inputs_18(invertedBoard)
+                            targetOutput = cords2TargetOutput(targetMovesO)
                             //System.out.println("Train for move X. Board: " + boardToString(invertedBoard))
-                            //ann.train(input, targetOutput)
-                            board[targetMoveO[0]][targetMoveO[1]] = "o"
-                            continue
+                            ann.train(input, targetOutput, ++sampleNumber)
+
+                            randomIndex = targetMovesO.size() == 1 ? 0 : (new Random()).nextInt(targetMovesO.size() - 1);
+                            board[targetMovesO.get(randomIndex).row][targetMovesO.get(randomIndex).col] = "o"
                         }
                     }
                     break
@@ -78,6 +78,7 @@ class TicTacToeMachineLearningSpec extends Specification
 
         then:
             ann.serializeToFile()
+            //ann.visualize()
             true
 
     }
@@ -106,7 +107,7 @@ class TicTacToeMachineLearningSpec extends Specification
     }
 
 
-    List<Double> moveCords2TargetOutput(final List<BoardCell> targetMoves)
+    List<Double> cords2TargetOutput(final List<BoardCell> targetMoves)
     {
         Map<String,Integer[]> bestMoves = targetMoves.stream().collect(Collectors.toMap(c -> c.row + "_" + c.col, c -> c ))
         List<Double> targetOutput = new ArrayList<>()

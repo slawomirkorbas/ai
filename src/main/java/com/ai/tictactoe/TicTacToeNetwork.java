@@ -51,7 +51,7 @@ public class TicTacToeNetwork
     public BoardCell predictNextMove(final String[][] board)
     {
         //predict board fields preferences
-        List<Double> predictedFields = ann.predict(board2Inputs(board));
+        List<Double> predictedFields = ann.predict(board2Inputs_18(board));
 
         //pick most rated field from the list
         int highRatedFieldIndex = 0;
@@ -70,6 +70,56 @@ public class TicTacToeNetwork
     }
 
     /**
+     * Convert game board (2D string array) into list of 9 integer inputs where:
+     * input value is 0 for an empty field
+     * input value is 1 for "x"
+     * input value is -1 for "o"
+     * @param board
+     * @return
+     */
+    public static List<Integer> board2Inputs_9(String[][] board)
+    {
+        int idx = 0;
+        String value = "";
+        final Integer[] boardInputs = new Integer[] {0,0,0,0,0,0,0,0,0};
+        for(int i=0; i<board.length; i++) {
+            for(int j=0; j<board.length; j++) {
+                value = board[i][j].trim();
+                if(value.isEmpty())
+                    boardInputs[idx++] = 0;
+                else if( value.equals("x"))
+                    boardInputs[idx++] = 1;
+                else if(value.equals("o"))
+                    boardInputs[idx++] = -1;
+            }
+        }
+        return Arrays.asList(boardInputs);
+    }
+
+    /**
+     *
+     * @param board
+     * @return
+     */
+
+    public static List<Integer> board2Inputs_18(String[][] board)
+    {
+        int idx = 0;
+        final Integer[] boardInputs = new Integer[] {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+        for(int i=0; i<board.length; i++) {
+            for(int j=0; j<board.length; j++) {
+                boardInputs[idx++] = board[i][j].equals("x") ? 1 : 0;
+            }
+        }
+        for(int i=0; i<board.length; i++) {
+            for(int j=0; j<board.length; j++) {
+                boardInputs[idx++] = board[i][j].equals("o") ? 1 : 0;
+            }
+        }
+        return Arrays.asList(boardInputs);
+    }
+
+    /**
      * Convert game board (2D string array) into list of 27 integer inputs where:
      * First 9 fields represent empty cells within the matrix. (1 is set if the field is empty)
      * Fields from 9-17 represent cells occupied by <code>x</code> within the matrix. (1 is set if the field is occupied by x)
@@ -77,7 +127,7 @@ public class TicTacToeNetwork
      * @param board - 2D string array
      * @return list of inputs capable for making predictions by neural network
      */
-    public static List<Integer> board2Inputs(String[][] board)
+    public static List<Integer> board2Inputs_27(String[][] board)
     {
         int idx = 0;
         final Integer[] boardInputs = new Integer[] {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
