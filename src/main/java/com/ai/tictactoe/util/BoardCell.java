@@ -12,6 +12,6 @@ import java.io.Serializable;
 @AllArgsConstructor
 public class BoardCell implements Serializable
 {
-    Integer row;
-    Integer col;
+    public Integer row;
+    public Integer col;
 }

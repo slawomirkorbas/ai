@@ -1,5 +1,7 @@
 package com.ai.tictactoe;
 
+import com.ai.tictactoe.util.BoardCell;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -17,18 +19,6 @@ public class MinMaxTicTacToeEngine
     final Integer NOT_FINISHED  = 728;
     String computerFigure;
 
-    private class BoardPosistion
-    {
-        Integer row;
-        Integer col;
-
-        BoardPosistion(int r, int c)
-        {
-            this.row = r;
-            this.col = c;
-        }
-    }
-
     /**
      * Return null if there is no move possible as the matrix is full.
      * @param board - current game state
@@ -37,9 +27,30 @@ public class MinMaxTicTacToeEngine
      */
     public Integer[] findBestMove(final String[][] board, final String figure)
     {
-        computerFigure = figure;
-        List<BoardPosistion> bestPositions = new ArrayList<>();
+        List<BoardCell> bestPositions = computeBestMoves(board, figure);
         Integer[] bestMove = null;
+        if(bestPositions.size() > 0)
+        {
+            // pick randomly best move from the list of best moves collected...
+            int randomIndex = bestPositions.size() == 1 ? 0 : (new Random()).nextInt(bestPositions.size() - 1);
+            BoardCell pos = bestPositions.get(randomIndex);
+            bestMove = new Integer[2];
+            bestMove[0] = pos.row;
+            bestMove[1] = pos.col;
+        }
+        return bestMove;
+    }
+
+    /**
+     * Compute best moves for given boar situation
+     * @param board
+     * @param figure
+     * @return
+     */
+    public List<BoardCell> computeBestMoves(final String[][] board, final String figure)
+    {
+        computerFigure = figure;
+        List<BoardCell> bestPositions = new ArrayList<>();
         Integer maxPts = null;
         if( gameState(board) == NOT_FINISHED)
         {
@@ -55,30 +66,21 @@ public class MinMaxTicTacToeEngine
                         if(maxPts == null || pts == maxPts)
                         {
                             maxPts = pts;
-                            bestPositions.add(new BoardPosistion(r,c));
+                            bestPositions.add(new BoardCell(r,c));
                         }
                         else if(pts > maxPts)
                         {
                             maxPts = pts;
                             bestPositions.clear();
-                            bestPositions.add(new BoardPosistion(r,c));
+                            bestPositions.add(new BoardCell(r,c));
                         }
                     }
                 }
             }
         }
-
-        if(bestPositions.size() > 0)
-        {
-            // pick randomly best move from the list of best moves collected...
-            int randomIndex = bestPositions.size() == 1 ? 0 : (new Random()).nextInt(bestPositions.size() - 1);
-            BoardPosistion pos = bestPositions.get(randomIndex);
-            bestMove = new Integer[2];
-            bestMove[0] = pos.row;
-            bestMove[1] = pos.col;
-        }
-        return bestMove;
+        return bestPositions;
     }
+
 
     /**
      * Evaluate possible games and applies score to each of them...

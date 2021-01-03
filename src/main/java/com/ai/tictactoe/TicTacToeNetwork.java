@@ -2,8 +2,6 @@ package com.ai.tictactoe;
 
 import com.ai.tictactoe.model.neuralnetwork.general.NeuralNetwork;
 import com.ai.tictactoe.util.BoardCell;
-
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
