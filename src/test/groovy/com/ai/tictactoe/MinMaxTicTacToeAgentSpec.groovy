@@ -1,23 +1,25 @@
 package com.ai.tictactoe
 
+import com.ai.tictactoe.agent.MinMaxTicTacToeAgent
+import com.ai.tictactoe.util.BoardCell
 import spock.lang.Specification
 import spock.lang.Unroll
 
-class MinMaxTicTacToeEngineSpec extends Specification
+class MinMaxTicTacToeAgentSpec extends Specification
 {
     @Unroll
     def "findBestMove: works as expected "()
     {
         given:
-            MinMaxTicTacToeEngine engine = new MinMaxTicTacToeEngine()
+            MinMaxTicTacToeAgent engine = new MinMaxTicTacToeAgent()
             String[][] board = matrix.toArray()
 
         when:
-            Integer[] move = engine.findBestMove(board, "x")
+            BoardCell move = engine.getNextMove(board, "x")
 
         then:
-            move[0] == expRow
-            move[1] == expCol
+            move.row == expRow
+            move.col == expCol
 
         where:
             matrix          | expRow | expCol
@@ -40,11 +42,11 @@ class MinMaxTicTacToeEngineSpec extends Specification
     def "findBestMove: returns null when the game is over"()
     {
         given:
-            MinMaxTicTacToeEngine engine = new MinMaxTicTacToeEngine()
+            MinMaxTicTacToeAgent engine = new MinMaxTicTacToeAgent()
             String[][] board = matrix.toArray()
 
         expect:
-            expResult == engine.findBestMove(board, "x")
+            expResult == engine.getNextMove(board, "x")
 
 
         where:
@@ -66,8 +68,8 @@ class MinMaxTicTacToeEngineSpec extends Specification
     def "generateGames"()
     {
         given:
-            MinMaxTicTacToeEngine minMaxEngine01 = new MinMaxTicTacToeEngine();
-            MinMaxTicTacToeEngine minMaxEngine02 = new MinMaxTicTacToeEngine();
+            MinMaxTicTacToeAgent minMaxEngine01 = new MinMaxTicTacToeAgent();
+            MinMaxTicTacToeAgent minMaxEngine02 = new MinMaxTicTacToeAgent();
 
         when:
             for(int r=0; r<3; r++)
@@ -78,13 +80,13 @@ class MinMaxTicTacToeEngineSpec extends Specification
                     board[r][c] = "o"
                     while(true)
                     {
-                        Integer[] move = minMaxEngine01.findBestMove(board, "x")
+                        BoardCell move = minMaxEngine01.getNextMove(board, "x")
                         if (move != null) {
-                            board[move[0]][move[1]] = "x"
-                            move = minMaxEngine02.findBestMove(board, "o")
+                            board[move.row][move.col] = "x"
+                            move = minMaxEngine02.getNextMove(board, "o")
                         }
                         if (move != null) {
-                            board[move[0]][move[1]] = "o"
+                            board[move.row][move.col] = "o"
                         }
                         if(move == null )
                         {

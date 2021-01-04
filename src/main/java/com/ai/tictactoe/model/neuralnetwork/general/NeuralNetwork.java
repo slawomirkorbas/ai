@@ -120,7 +120,7 @@ public class NeuralNetwork implements Serializable
      * @param inputValues - input values to feed neurons from the input layer
      * @return list of values from output neurons
      */
-    public List<Double> predict(List<Integer> inputValues)
+    public List<Double> predictVector(final List<Integer> inputValues)
     {
         if(layers.size() == 0)
         {
@@ -145,7 +145,8 @@ public class NeuralNetwork implements Serializable
 
 
     /**
-     *
+     * Train neural network using supervised learning (example data targets).
+     * Uses "back propagation" algorithm.
      *
      * @param inputs
      * @param targets
@@ -159,7 +160,7 @@ public class NeuralNetwork implements Serializable
         }
 
         // predict results for given inputs...
-        predict(inputs);
+        predictVector(inputs);
 
         // Back propagation:
         // Calculate derivative of the cost(error) function with respect to input weights of specific layer's neurons

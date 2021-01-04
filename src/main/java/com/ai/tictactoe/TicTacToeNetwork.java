@@ -16,12 +16,10 @@ public class TicTacToeNetwork
     /** Neural network object **/
     NeuralNetwork ann;
 
+    /** Utility maps **/
     private final static Map<Integer, BoardCell> cellIndex2CellMap = new HashMap<>();
-
-    /**
-     * Default constructor
-     */
-    public TicTacToeNetwork()
+    private final static Map<String, Integer> rowCol2CellIndexMap  = new HashMap<>();
+    static
     {
         cellIndex2CellMap.put(0, new BoardCell(0,0));
         cellIndex2CellMap.put(1, new BoardCell(0,1));
@@ -32,6 +30,24 @@ public class TicTacToeNetwork
         cellIndex2CellMap.put(6, new BoardCell(2,0));
         cellIndex2CellMap.put(7, new BoardCell(2,1));
         cellIndex2CellMap.put(8, new BoardCell(2,2));
+
+        rowCol2CellIndexMap.put( "0_0", 0);
+        rowCol2CellIndexMap.put( "0_1", 1);
+        rowCol2CellIndexMap.put( "0_2", 2);
+        rowCol2CellIndexMap.put( "1_0", 3);
+        rowCol2CellIndexMap.put( "1_1", 4);
+        rowCol2CellIndexMap.put( "1_2", 5);
+        rowCol2CellIndexMap.put( "2_0", 6);
+        rowCol2CellIndexMap.put( "2_1", 7);
+        rowCol2CellIndexMap.put( "2_2", 8);
+    }
+
+    /**
+     * Default constructor
+     */
+    public TicTacToeNetwork()
+    {
+
     }
 
     /**
@@ -50,8 +66,17 @@ public class TicTacToeNetwork
      */
     public BoardCell predictNextMove(final String[][] board)
     {
+        //List<Double> outputVector = ann.predictVector(board2Inputs_18(board));
+        //Integer cellIndex = (int)Math.round(outputVector.get(0));
+        //if(cellIndex < 0 || cellIndex > 8)
+        //{
+        //    return null;
+        //}
+        //
+        //return cellIndex2CellMap.get(cellIndex);
+
         //predict board fields preferences
-        List<Double> predictedFields = ann.predict(board2Inputs_18(board));
+        List<Double> predictedFields = ann.predictVector(board2Inputs_18(board));
 
         //pick most rated field from the list
         int highRatedFieldIndex = 0;

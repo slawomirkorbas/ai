@@ -46,7 +46,7 @@ class NeuralNetworkSpec extends Specification
             List<Integer> inputs = [ 1, 0, 1, 0, 1]
 
         when:
-            List<Double> outputValues = net.predict(inputs)
+            List<Double> outputValues = net.predictVector(inputs)
         then:
             outputValues.size() == 2
             outputValues.forEach( v -> {
@@ -63,7 +63,7 @@ class NeuralNetworkSpec extends Specification
             net.addLayer(3, "I", null, null)
             net.addLayer(2, "H", 0.1d, activationFunction)
         and:
-            List<Double> outputs = net.predict(inputs)
+            List<Double> outputs = net.predictVector(inputs)
             List<Double> squaredErrors = []
             outputs.stream().eachWithIndex{ double entry, int i ->
                 squaredErrors.add( 0.5 * Math.pow(targets[i] - entry, 2))
@@ -73,7 +73,7 @@ class NeuralNetworkSpec extends Specification
             5.times {
                 net.train(inputs, targets, 1) }
         and:
-            List<Double> newOutputs = net.predict(inputs)
+            List<Double> newOutputs = net.predictVector(inputs)
         then:
             List<Double> updatedSquaredErrors = []
             newOutputs.stream().eachWithIndex{ double entry, int i ->
