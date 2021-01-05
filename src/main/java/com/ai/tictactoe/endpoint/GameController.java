@@ -1,6 +1,6 @@
 package com.ai.tictactoe.endpoint;
 
-import com.ai.tictactoe.TicTacToeNetwork;
+import com.ai.tictactoe.TicTacToeFacade;
 import com.ai.tictactoe.dto.BoardDto;
 import com.ai.tictactoe.util.BoardCell;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +20,7 @@ public class GameController
 {
 
     @Autowired
-    TicTacToeNetwork ticTacToeNetwork;
+    TicTacToeFacade ticTacToeNetwork;
 
     @GetMapping("/tictactoe/newBoard")//, produces = MediaType.APPLICATION_JSON_VALUE)
     BoardDto getNewGame()

@@ -20,7 +20,7 @@ class NeuralNetworkSpec extends Specification
             hiddenLayer.numberOfNeurons() == 9
     }
 
-    def "visualize: works as expected"()
+    def "visualize: creates PNG file with neural network graph"()
     {
         given:
             double learningRate = 0.01
@@ -35,7 +35,7 @@ class NeuralNetworkSpec extends Specification
             netImageFile != null
     }
 
-    def 'predict: works as expected'()
+    def 'predict: returns vector of expected size'()
     {
         given:
             NeuralNetwork net = new NeuralNetwork(0.01)
@@ -90,6 +90,52 @@ class NeuralNetworkSpec extends Specification
             activationFunction          | inputs      | targets
             ActivationFunction.SIGMOID | [ 1, 0, 1 ] | [ 1.0d, 0.0d ]
             ActivationFunction.TANH    | [ 1, 0, 1 ] | [ 1.0d, 0.0d ]
+    }
+
+
+    def 'train test 1: 3 layer network can be trained to change binary input to decimal number in specific range'()
+    {
+        given:
+            final NeuralNetwork net = new NeuralNetwork(0.01d)
+            net.addLayer(2, "I", null, null)
+            net.addLayer(8, "H1", 0.01d, ActivationFunction.SIGMOID)
+            //net.addLayer(4, "H2", 0.02d, ActivationFunction.SIGMOID)
+            net.addLayer(1, "O", 0.03d, ActivationFunction.RELU)
+
+        when:
+            List dataSet = [ [ inputs: [ 0, 0 ], targets: [0.0d] ],
+                             [ inputs: [ 0, 1 ], targets: [1.0d] ],
+                             [ inputs: [ 1, 0 ], targets: [2.0d] ],
+                             [ inputs: [ 1, 1 ], targets: [3.0d] ] ]
+            500.times {
+                int sampleNo = 0
+                dataSet.forEach( d -> {
+                    net.train( d.inputs, d.targets, sampleNo++ )
+                })
+            }
+
+        then:
+            dataSet.forEach( d -> {
+                List<Double> predictedValues = net.predictVector(d.inputs)
+                System.out.println("expected: " + d.targets[0] + ". predicted: " + predictedValues[0])
+                d.targets[0] == predictedValues[0]
+            })
+    }
+
+    def 'deepLearning4J: smoke test'()
+    {
+//        given:
+//            MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+//                    .weightInit(WeightInit.XAVIER)
+//                    .activation(Activation.RELU)
+//                    .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
+//                    .updater(new Sgd(0.05))
+//                    .list()
+//                    .backprop(true)
+//                    .build()
+//
+//        conf..layer(0, new DenseLayer.Builder().nIn(784).nOut(250)
+//                .build())
     }
 
 

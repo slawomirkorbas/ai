@@ -5,7 +5,6 @@ import com.ai.tictactoe.agent.RandomTicTacToeAgent
 import com.ai.tictactoe.model.neuralnetwork.general.ActivationFunction
 import com.ai.tictactoe.model.neuralnetwork.general.NeuralNetwork
 import com.ai.tictactoe.util.BoardCell
-import spock.lang.Ignore
 import spock.lang.Specification
 import java.util.stream.Collectors
 
@@ -26,29 +25,26 @@ class TicTacToeMachineLearningSpec extends Specification
             Double learningRate = 0.1d
             final NeuralNetwork ann = new NeuralNetwork(learningRate)
             ann.addLayer(18, "I", null, null)
-            ann.addLayer(12, "H1", 0.1d, ActivationFunction.RELU)
-            ann.addLayer(9 , "H2", 0.1d, ActivationFunction.RELU)
-            ann.addLayer(1 , "O" , 0.1d, ActivationFunction.RELU)
+            ann.addLayer(12, "H1", 0.01d, ActivationFunction.TANH)
+            ann.addLayer(9 , "H2", 0.01d, ActivationFunction.TANH)
+            ann.addLayer(1 , "O" , 0.01d, ActivationFunction.RELU)
             int sampleNumber = 0
         and:
             MinMaxTicTacToeAgent minMaxAgent = new MinMaxTicTacToeAgent()
             RandomTicTacToeAgent randomAgent = new RandomTicTacToeAgent()
 
         when:
-            2000.times {
+            100.times {
                 String[][] board = [[" ", " ", " "], [" ", " ", " "], [" ", " ", " "]]
                 while(true) {
                     BoardCell targetMoveX = minMaxAgent.getFirstNextMove(board, "x")
-                    List<Integer> input = TicTacToeNetwork.board2Inputs_18(board)
+                    List<Integer> input = TicTacToeFacade.board2Inputs_18(board)
                     if (targetMoveX == null) {
                         ann.train(input, [Double.valueOf(-1)], ++sampleNumber)
                         break
                     }
-                    Integer targetCellIndex = TicTacToeNetwork.rowCol2CellIndexMap.get(targetMoveX.row + "_" + targetMoveX.col)
-
+                    Integer targetCellIndex = TicTacToeFacade.rowCol2CellIndexMap.get(targetMoveX.row + "_" + targetMoveX.col)
                     ann.train(input, [Double.valueOf(targetCellIndex)], ++sampleNumber)
-
-                    // make a preferred move...
                     board[targetMoveX.row][targetMoveX.col] = "x"
 
                     // player "O" turn...
@@ -73,32 +69,38 @@ class TicTacToeMachineLearningSpec extends Specification
             final Double learningRate = 0.1d
             final NeuralNetwork ann = new NeuralNetwork(learningRate)
             ann.addLayer(18, "I" , null, null)
-            ann.addLayer(15, "H1", 0.1d, ActivationFunction.RELU)
-            ann.addLayer(12, "H2", 0.1d, ActivationFunction.RELU)
-            ann.addLayer(9 , "O" , 0.1d, ActivationFunction.SIGMOID)
+            ann.addLayer(15, "H1", 0.1d, ActivationFunction.SIGMOID)
+            ann.addLayer(12, "H2", 0.1d, ActivationFunction.SIGMOID)
+            ann.addLayer(9 , "O" , 0.1d, ActivationFunction.SIGMOID) // TODO apply softmax...
         and:
             MinMaxTicTacToeAgent playerX = new MinMaxTicTacToeAgent()
-            MinMaxTicTacToeAgent playerO = new MinMaxTicTacToeAgent()
+            RandomTicTacToeAgent randomAgent = new RandomTicTacToeAgent()
         and:
-            int sampleNumber = 0
+            int sampleNumber = 0, gameNo = 0
             Integer batchSize = 1000
+            final Map<String, String[][]> uniqueGameStateMap = new HashMap<>()
 
         when:
-            batchSize.times {
+            1000.times {
                 String[][] board = [[" ", " ", " "], [" ", " ", " "], [" ", " ", " "]]
-                String[][] invertedBoard
 
                 while(true)
                 {
                     List<BoardCell> targetMovesX = playerX.computeBestMoves(board, "x")
                     if (targetMovesX.size() > 0)
                     {
-                        List<Integer> input = TicTacToeNetwork.board2Inputs_18(board)
+                        List<Integer> input = TicTacToeFacade.board2Inputs_18(board)
                         List<Double> targetOutput = cords2TargetOutput_9(targetMovesX)
 
-                        // perform learning iteration (prediction + back propagation)
-                        //System.out.println("Train for move X. Board: " + boardToString(board))
-                        ann.train(input, targetOutput, ++sampleNumber)
+                        // train network only for newly experienced game states
+                       // final String gameStateKey = randomAgent.getBoardKey(board)
+                       // if(null == uniqueGameStateMap.get(gameStateKey) )
+                       // {
+                            ann.train(input, targetOutput, ++sampleNumber)
+                            //uniqueGameStateMap.put(gameStateKey, board)
+                            //System.out.println(uniqueGameStateMap.size() + " game state trained: " + boardToString(board))
+                       // }
+
 
                         // pick randomly best move from the list of best moves collected...
                         //int randomIndex = targetMovesX.size() == 1 ? 0 : (new Random()).nextInt(targetMovesX.size() - 1);
@@ -106,21 +108,23 @@ class TicTacToeMachineLearningSpec extends Specification
                         board[targetMovesX.get(0).row][targetMovesX.get(0).col] = "x"
 
                         // payer "O" turn...
-                        List<BoardCell> targetMovesO = playerO.computeBestMoves(board, "o")
-                        if (targetMovesO.size() > 0)
-                        {
-                            // perform learning iteration (prediction + back propagation) for the inverted board
-//                            invertedBoard = invertBoard(board)
-//                            input = TicTacToeNetwork.board2Inputs_18(invertedBoard)
-//                            targetOutput = cords2TargetOutput_9(targetMovesO)
-//                            //System.out.println("Train for move X. Board: " + boardToString(invertedBoard))
-//                            ann.train(input, targetOutput, ++sampleNumber)
-
-                             int randomIndex = targetMovesO.size() == 1 ? 0 : (new Random()).nextInt(targetMovesO.size() - 1);
-                             board[targetMovesO.get(randomIndex).row][targetMovesO.get(randomIndex).col] = "o"
+                        BoardCell nextMoveO = randomAgent.getNextMove(board, "o")
+                        if (nextMoveO == null) {
+                            System.out.println(++gameNo + " Game training finished: " + boardToString(board))
+                            break
                         }
+                        board[nextMoveO.row][nextMoveO.col] = "o"
+//                        List<BoardCell> targetMovesO = playerO.computeBestMoves(board, "o")
+//                        if (targetMovesO.size() > 0)
+//                        {
+//                             int randomIndex = targetMovesO.size() == 1 ? 0 : (new Random()).nextInt(targetMovesO.size() - 1);
+//                             board[targetMovesO.get(randomIndex).row][targetMovesO.get(randomIndex).col] = "o"
+//                        }
                     }
-                    break
+                    else {
+                        System.out.println(++gameNo + " Game training finished: " + boardToString(board))
+                        break
+                    }
                 }
             }
 
@@ -130,6 +134,28 @@ class TicTacToeMachineLearningSpec extends Specification
             true
 
     }
+
+
+    def 'Next predicted move should be different than the first one during a game'()
+    {
+        given:
+            TicTacToeFacade ann =  new TicTacToeFacade();
+            ann.init("neural-network-20210104-1836.ann")
+        and:
+            RandomTicTacToeAgent randomAgent = new RandomTicTacToeAgent()
+            String[][] board = [["x", "o", " "], [" ", " ", " "], [" ", " ", " "]]
+
+        when:
+            BoardCell moveX = ann.predictNextMove(board)
+            board[moveX.row][moveX.col] = "x"
+        and:
+            BoardCell moveO = randomAgent.getNextMove(board, "o")
+            board[moveO.row][moveO.col] = "o"
+        then:
+            moveX != ann.predictNextMove(board)
+    }
+
+
 
     String boardToString(String[][]board)
     {

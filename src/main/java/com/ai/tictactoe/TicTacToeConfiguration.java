@@ -23,10 +23,10 @@ public class TicTacToeConfiguration implements WebMvcConfigurer
     private ApplicationContext applicationContext;
 
     @Bean
-    TicTacToeNetwork ticTacToeNetwork()
+    TicTacToeFacade ticTacToeNetwork()
     {
-        TicTacToeNetwork ann =  new TicTacToeNetwork();
-        ann.init("neural-network-20210104-0119.ann");
+        TicTacToeFacade ann =  new TicTacToeFacade();
+        ann.init("neural-network-20210104-1629.ann");
         return ann;
     }
 

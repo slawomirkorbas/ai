@@ -88,7 +88,7 @@ public class RandomTicTacToeAgent extends TicTacToeAgent
      * @param board
      * @return
      */
-    private String getBoardKey(final String[][] board)
+    public String getBoardKey(final String[][] board)
     {
         String key = "";
         for(int r = 0; r < board.length; r++)

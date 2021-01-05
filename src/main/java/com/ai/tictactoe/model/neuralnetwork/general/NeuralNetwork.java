@@ -65,6 +65,15 @@ public class NeuralNetwork implements Serializable
     }
 
     /**
+     * Returns an output layer
+     * @return
+     */
+    public Layer getOutputLayer()
+    {
+        return layers.get(layers.size()-1);
+    }
+
+    /**
      * Adds new layer to the network.
      * @param noOfNeurons - number of neurons within the layer
      * @param initWeight - initial weight for edges between the new layer and previous layer. MAy be null if this is the first layer.
@@ -169,7 +178,6 @@ public class NeuralNetwork implements Serializable
         for(int l = layers.size() - 1; l > 0; l-- )
         {
             final Layer currentLayer = layers.get(l);
-            //for each neuron in the layer:
             for(int i = 0; i < currentLayer.numberOfNeurons(); i++)
             {
                 final Neuron currentNeuron = currentLayer.get(i);
@@ -197,7 +205,6 @@ public class NeuralNetwork implements Serializable
                 }
 
                 // Partial derivative of Net with respect to specific input weight (i,j)
-                // this is just Output value of the predecessor as (Net)' = (OUT_0 * W_01 + ... OUT_i * W_ij)' = OUT_0 (just constant)
                 List<Neuron> predecessors = Graphs.predecessorListOf(net, currentNeuron);
                 for(int p = 0; p < predecessors.size(); p++)
                 {
@@ -206,13 +213,11 @@ public class NeuralNetwork implements Serializable
                     //Apply chaining rule to calculate d_E_w
                     Double d_net_w = predecessor.getOutputValue();
                     Double d_Etotal_w = d_net_w * currentNeuron.d_out_net * currentNeuron.d_E_out;
-
-                    // subtract calculated (averaged) delta multiplied by learning rate from the weight (i,j)
                     DefaultWeightedEdge edge = net.getEdge(predecessor, currentNeuron);
-                    Double weight = net.getEdgeWeight(edge);
+                    // subtract calculated (averaged) delta multiplied by learning rate from the weight (i,j)
                     //Double avg_gradient_per_weight = currentNeuron.updateAverageGradientForWeight(edge, sampleNumber, d_Etotal_w);
                     //net.setEdgeWeight(edge, weight - learningRate * avg_gradient_per_weight);
-                    net.setEdgeWeight(edge, weight - learningRate * d_Etotal_w);
+                    net.setEdgeWeight(edge, net.getEdgeWeight(edge) - learningRate * d_Etotal_w);
                 }
             }
         }
