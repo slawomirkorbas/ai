@@ -68,7 +68,7 @@ public class TicTacToeFacade
     {
         if( ann.getOutputLayer().getNeuronList().size() == 1)
         {
-            List<Double> outputVector = ann.predictVector(board2Inputs_18(board));
+            List<Double> outputVector = ann.predict(board2Inputs_18(board));
             Integer cellIndex = (int)Math.round(outputVector.get(0));
             if(cellIndex < 0 || cellIndex > 8)
             {
@@ -78,7 +78,7 @@ public class TicTacToeFacade
         }
 
         //predict board fields preferences
-        List<Double> predictedFields = ann.predictVector(board2Inputs_18(board));
+        List<Double> predictedFields = ann.predict(board2Inputs_18(board));
 
         //pick most rated field from the list
         int highRatedFieldIndex = 0;

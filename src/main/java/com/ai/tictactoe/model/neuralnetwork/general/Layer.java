@@ -63,7 +63,7 @@ public class Layer implements Serializable
         for(Neuron neuron : this.neuronList)
         {
             neuron.calcNetValueFromInputs(net);
-            neuron.activate(activationFunction);
+            neuron.activate();
         }
     }
 

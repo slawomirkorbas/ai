@@ -41,7 +41,13 @@ public class NeuralNetwork implements Serializable
     /** Default learning rate **/
     private double learningRate = 0.01;
 
-    /** List of hidden layers**/
+    /** Algorithm identifier which is used to initialize weights between layer **/
+    private WeightInitializationType weightInitializationType;
+
+    /** Weight initializer **/
+    private static final Double DEFAULT_LEARNING_RATE = 0.01d;
+
+    /** List of layers**/
     @Getter
     @Setter
     private List<Layer> layers;
@@ -51,17 +57,25 @@ public class NeuralNetwork implements Serializable
      */
     public NeuralNetwork()
     {
-
+        this.net = new SimpleDirectedWeightedGraph<>(DefaultWeightedEdge.class);
+        this.layers = new ArrayList<>();
+        this.learningRate = DEFAULT_LEARNING_RATE;
+        this.weightInitializationType = WeightInitializationType.NONE;
     }
+
 
     /**
      * Default constructor
+     *
+     * @param learningRate
+     * @param weightInitializationType
      */
-    public NeuralNetwork(double learningRate)
+    public NeuralNetwork(double learningRate, WeightInitializationType weightInitializationType)
     {
         this.net = new SimpleDirectedWeightedGraph<>(DefaultWeightedEdge.class);
         this.layers = new ArrayList<>();
         this.learningRate = learningRate;
+        this.weightInitializationType = weightInitializationType;
     }
 
     /**
@@ -98,7 +112,7 @@ public class NeuralNetwork implements Serializable
         for(int neuronIndex = 0; neuronIndex < noOfNeurons; neuronIndex++)
         {
             // add new neuron
-            Neuron newNeuron = new Neuron(numberOfLayers + "_" + layerName + "_" + neuronIndex);
+            Neuron newNeuron = new Neuron(numberOfLayers + "_" + layerName + "_" + neuronIndex, activationFunction);
             net.addVertex(newNeuron);
 
             // add weighted connections to previous layer
@@ -112,15 +126,57 @@ public class NeuralNetwork implements Serializable
             }
         }
 
-        newLayer = new Layer(layerName, net.vertexSet().stream()
-                              .filter(n -> n.name.startsWith(numberOfLayers + "_")).collect(Collectors.toList()),
-                              activationFunction
-                             );
+        final List<Neuron> neuronList = net.vertexSet().stream()
+                                           .filter(n -> n.name.startsWith(numberOfLayers + "_")).collect(Collectors.toList());
+        newLayer = new Layer(layerName, neuronList, activationFunction );
+
+        //create "Bias" neuron: biases are needed because if an input pattern are zero, the weights
+        //may not be never changed for this pattern and the net could not learn it. This is kind of
+        //"pseudo input" with constant value of "1"
+        if(previousLayer != null)
+        {
+            Neuron bias = new Neuron(numberOfLayers + "_Bias_" + layerName + "_", null);
+            bias.setOutputValue(1.0);
+            net.addVertex(bias);
+
+            //connect the "Bias" neuron to each neuron from this layer
+            for(Neuron n : neuronList)
+            {
+                DefaultWeightedEdge newEdge = net.addEdge(bias, n);
+                net.setEdgeWeight(newEdge, initWeight);
+            }
+        }
 
         // adds layer to the main list
         layers.add(newLayer);
 
         return newLayer;
+    }
+
+    /**
+     * Initialize weights using specific Weight initialization algorithm
+     */
+    public void initialize()
+    {
+        switch(this.weightInitializationType)
+        {
+            case NONE: break;
+            case XAVIER: // not sure if it is real XAVIER...
+                layers.stream().forEach( l -> {
+                    l.getNeuronList().stream().forEach( n -> {
+                        List<DefaultWeightedEdge> inputEdges = n.getInputEdges(net);
+                        if(inputEdges.size() > 0)
+                        {
+                            Double xavierWeight = Double.valueOf(1.0/inputEdges.size());
+                            for( DefaultWeightedEdge edge : inputEdges)
+                            {
+                                net.setEdgeWeight(edge, xavierWeight);
+                            }
+                        }
+                    });
+                });
+                break;
+        }
     }
 
 
@@ -129,7 +185,7 @@ public class NeuralNetwork implements Serializable
      * @param inputValues - input values to feed neurons from the input layer
      * @return list of values from output neurons
      */
-    public List<Double> predictVector(final List<Integer> inputValues)
+    public List<Double> predict(final List<Integer> inputValues)
     {
         if(layers.size() == 0)
         {
@@ -149,7 +205,7 @@ public class NeuralNetwork implements Serializable
         }
 
         // return neurons from the last layer (output layer)
-        return layers.get(layers.size()-1).neuronList.stream().map(n -> n.getOutputValue()).collect(Collectors.toList());
+        return layers.get(layers.size()-1).neuronList.stream().map(n -> n.outputValue).collect(Collectors.toList());
     }
 
 
@@ -169,10 +225,9 @@ public class NeuralNetwork implements Serializable
         }
 
         // predict results for given inputs...
-        predictVector(inputs);
+        predict(inputs);
 
-        // Back propagation:
-        // Calculate derivative of the cost(error) function with respect to input weights of specific layer's neurons
+        // Back propagation: calculate derivative of the cost(error) function with respect to input weights of specific layer's neurons
 
         // ... for the output layer and all preceding hidden layers
         for(int l = layers.size() - 1; l > 0; l-- )
@@ -181,43 +236,42 @@ public class NeuralNetwork implements Serializable
             for(int i = 0; i < currentLayer.numberOfNeurons(); i++)
             {
                 final Neuron currentNeuron = currentLayer.get(i);
+                Double d_E_out = 0.0;
                 if( l == layers.size() - 1 ) // Output Layer:
                 {
                     // Partial derivative of E (cost function value) with respect to Out (activation result(output))
                     // derivative of squared error: 0.5 * Math.pow(targets.get(i) - currentNeuron.getOutputValue(),2)
-                    currentNeuron.d_E_out = -(targets.get(i) - currentNeuron.getOutputValue());
-
-                    // Partial derivatives of Output(activation function results) with respect to Net value of the neuron
-                    currentNeuron.d_out_net = Derivatives.getDerivative(currentLayer.getActivationFunction()).apply(currentNeuron.getOutputValue());
+                    d_E_out = -(targets.get(i) - currentNeuron.outputValue);
                 }
                 else // Hidden layer:
                 {
                     // Partial derivatives of Output(activation function results) with respect to Net value of the neuron
-                    currentNeuron.d_out_net = Derivatives.getDerivative(currentLayer.getActivationFunction()).apply(currentNeuron.getOutputValue());
                     List<DefaultWeightedEdge> outputEdges = currentNeuron.getOutputEdges(net);
                     for(DefaultWeightedEdge edge : outputEdges)
                     {
-                        Double d_Ei_netoi = net.getEdgeTarget(edge).d_E_out * net.getEdgeTarget(edge).d_out_net;
+                        Double d_Ei_netoi = net.getEdgeTarget(edge).errorDeltaNet;
                         Double d_Netoi_outhi = net.getEdgeWeight(edge);  // this is just "wi" (Weight) because: (wi*outhi + wj*outhj)' = wi
                         Double d_Ei_outhi = d_Ei_netoi * d_Netoi_outhi;
-                        currentNeuron.d_E_out = currentNeuron.d_E_out == null ? d_Ei_outhi : currentNeuron.d_E_out + d_Ei_outhi;
+                        d_E_out += d_Ei_outhi;
                     }
+
                 }
+                currentNeuron.calculateErrorDeltaNet(d_E_out);
 
                 // Partial derivative of Net with respect to specific input weight (i,j)
                 List<Neuron> predecessors = Graphs.predecessorListOf(net, currentNeuron);
+                //System.out.println("Updating weights: ");
                 for(int p = 0; p < predecessors.size(); p++)
                 {
                     final Neuron predecessor = predecessors.get(p);
 
                     //Apply chaining rule to calculate d_E_w
-                    Double d_net_w = predecessor.getOutputValue();
-                    Double d_Etotal_w = d_net_w * currentNeuron.d_out_net * currentNeuron.d_E_out;
+                    Double d_net_w = predecessor.outputValue;
+                    Double d_Etotal_w = d_net_w * currentNeuron.errorDeltaNet;
                     DefaultWeightedEdge edge = net.getEdge(predecessor, currentNeuron);
-                    // subtract calculated (averaged) delta multiplied by learning rate from the weight (i,j)
-                    //Double avg_gradient_per_weight = currentNeuron.updateAverageGradientForWeight(edge, sampleNumber, d_Etotal_w);
-                    //net.setEdgeWeight(edge, weight - learningRate * avg_gradient_per_weight);
                     net.setEdgeWeight(edge, net.getEdgeWeight(edge) - learningRate * d_Etotal_w);
+
+                    //System.out.println("w(" + predecessor.getName() + "->" + currentNeuron.getName() + ") updated: " + net.getEdgeWeight(edge));
                 }
             }
         }

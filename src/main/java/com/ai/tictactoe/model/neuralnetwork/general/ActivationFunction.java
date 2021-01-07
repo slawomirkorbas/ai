@@ -1,6 +1,8 @@
 package com.ai.tictactoe.model.neuralnetwork.general;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Function;
 
 /**
@@ -9,7 +11,5 @@ import java.util.function.Function;
  */
 public interface ActivationFunction extends  Function<Double, Double>, Serializable
 {
-    ActivationFunction RELU     = net -> Math.max(0, net);
-    ActivationFunction SIGMOID  = net -> 1 / (1 + Math.exp(-net));
-    ActivationFunction TANH     = net -> Math.sinh(net)/Math.cosh(net);
+
 }

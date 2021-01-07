@@ -28,27 +28,26 @@ public class Neuron implements Serializable
     /** Name of the neuron **/
     String name;
 
+    /** Activation function to apply on Net value eg. hyperbolic like SIGMOID or TANH **/
+    ActivationFunction activationFunction;
+
     /** Value of the neuron based on the aggregated sum of inputs multiplied by their weights **/
     Double netVal;
 
     /** Value of the neuron after applying activation function**/
     Double outputValue;
 
-    /** Transient Value of calculated derivative of Error/output of this neuron -
-     used during back propagation**/
-    Double d_E_out;
-
-    /** Transient Value of calculated derivative of Output/netVal of this neuron -
-     used during back propagation**/
-    Double d_out_net;
+    /** Transient Value of calculated derivative of Error/netVal for this neuron - used during back propagation**/
+    Double errorDeltaNet;
 
     /**
      * Default constructor
      * @param name - name of the neuron
      */
-    public Neuron(final String name)
+    public Neuron(final String name, ActivationFunction activationFunction)
     {
         this.name = name;
+        this.activationFunction = activationFunction;
     }
 
     @Override
@@ -114,13 +113,27 @@ public class Neuron implements Serializable
 
     /**
      * Calculates output value of the neuron by applying specific function.
-     * @param activationFunction - function to apply eg. hyperbolic like SIGMOID or TANH
      * @return output value
      */
-    public Double activate(Function<Double, Double> activationFunction)
+    public Double activate()
     {
-        outputValue = activationFunction.apply(netVal);
+        if(activationFunction != null)
+        {
+            outputValue = activationFunction.apply(netVal);
+        }
         return outputValue;
+    }
+
+    /**
+     *
+     * @param d_E_out
+     * @return
+     */
+    public Double calculateErrorDeltaNet(Double d_E_out)
+    {
+        Double d_out_net = Activation.derivatives.get(activationFunction).apply(outputValue);
+        errorDeltaNet = d_out_net * d_E_out;
+        return d_out_net;
     }
 
     /**
