@@ -39,7 +39,7 @@ public class NeuralNetwork implements Serializable
     private SimpleDirectedWeightedGraph<Neuron, DefaultWeightedEdge> net;
 
     /** Default learning rate **/
-    private double learningRate = 0.01;
+    private double learningRate = DEFAULT_LEARNING_RATE;
 
     /** Algorithm identifier which is used to initialize weights between layer **/
     private WeightInitializationType weightInitializationType;
@@ -63,7 +63,6 @@ public class NeuralNetwork implements Serializable
         this.weightInitializationType = WeightInitializationType.NONE;
     }
 
-
     /**
      * Default constructor
      *
@@ -85,6 +84,24 @@ public class NeuralNetwork implements Serializable
     public Layer getOutputLayer()
     {
         return layers.get(layers.size()-1);
+    }
+
+    /**
+     * Returns an input layer
+     * @return
+     */
+    public Layer getInputLayer()
+    {
+        return layers.get(0);
+    }
+
+    /**
+     * True if network has just one output neuron.
+     * @return
+     */
+    public boolean isSingleOutput()
+    {
+        return getOutputLayer().getNeuronList().size() == 1;
     }
 
     /**
@@ -228,8 +245,6 @@ public class NeuralNetwork implements Serializable
         predict(inputs);
 
         // Back propagation: calculate derivative of the cost(error) function with respect to input weights of specific layer's neurons
-
-        // ... for the output layer and all preceding hidden layers
         for(int l = layers.size() - 1; l > 0; l-- )
         {
             final Layer currentLayer = layers.get(l);
@@ -254,7 +269,6 @@ public class NeuralNetwork implements Serializable
                         Double d_Ei_outhi = d_Ei_netoi * d_Netoi_outhi;
                         d_E_out += d_Ei_outhi;
                     }
-
                 }
                 currentNeuron.calculateErrorDeltaNet(d_E_out);
 
@@ -264,13 +278,11 @@ public class NeuralNetwork implements Serializable
                 for(int p = 0; p < predecessors.size(); p++)
                 {
                     final Neuron predecessor = predecessors.get(p);
-
                     //Apply chaining rule to calculate d_E_w
                     Double d_net_w = predecessor.outputValue;
                     Double d_Etotal_w = d_net_w * currentNeuron.errorDeltaNet;
                     DefaultWeightedEdge edge = net.getEdge(predecessor, currentNeuron);
                     net.setEdgeWeight(edge, net.getEdgeWeight(edge) - learningRate * d_Etotal_w);
-
                     //System.out.println("w(" + predecessor.getName() + "->" + currentNeuron.getName() + ") updated: " + net.getEdgeWeight(edge));
                 }
             }
@@ -320,8 +332,13 @@ public class NeuralNetwork implements Serializable
     {
         try
         {
+            String fileName = "net";
+            for(Layer l : this.layers)
+            {
+                fileName += "-" + l.getNeuronList().size();
+            }
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmm");
-            final String fileName = "neural-network-" + formatter.format(LocalDateTime.now()) + ".ann";
+            fileName += "-" + formatter.format(LocalDateTime.now()) + ".ann";
             ByteArrayOutputStream stream = serialize();
             FileOutputStream fileOutputStream = new FileOutputStream(fileName);
             fileOutputStream.write(stream.toByteArray());

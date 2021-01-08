@@ -1,6 +1,4 @@
-package com.ai.tictactoe.agent;
-
-import com.ai.tictactoe.util.BoardCell;
+package com.ai.tictactoe.game;
 
 /**
  * Base class for TicTacToe agents
@@ -8,20 +6,36 @@ import com.ai.tictactoe.util.BoardCell;
 public abstract class TicTacToeAgent
 {
     final Integer TOTAL_FIELDS  = 9;
-    final Integer COMPUTER_WIN  = 1;
-    final Integer COMPUTER_LOST = -1;
-    final Integer DRAW          = 0;
-    final Integer NOT_FINISHED  = 728;
-    String computerFigure;
+    final public String playAs;
 
-    public abstract BoardCell getNextMove(final String[][] board, final String figure);
+    public abstract BoardCell getNextMove(final String[][] board);
+
+    public TicTacToeAgent(final String playAs)
+    {
+        this.playAs = playAs;
+    }
+
+    /**
+     * Finds next possible move and updates given board.
+     * @param board - initial board with game state to process
+     * @return game result after the move has been made
+     */
+    public GameResult doMove(final String[][] board)
+    {
+        BoardCell nextMove = this.getNextMove(board);
+        if(nextMove != null)
+        {
+            board[nextMove.row][nextMove.col] = this.playAs;
+        }
+        return gameState(board);
+    }
 
     /**
      * Check game state.
      * @param board - game state
      * @return 0 - game is not finished, 1 - 'x' has won, -1 - 'o' has won
      */
-    Integer gameState(final String[][] board )
+    GameResult gameState(final String[][] board )
     {
         // horizontal scan...
         int countX = 0, countO = 0, winCount = 3;
@@ -33,9 +47,9 @@ public abstract class TicTacToeAgent
                 countO = board[r][c].equals("o") ? countO + 1 : 0;
             }
             if(countX == winCount )
-                return computerFigure.equals("x") ? COMPUTER_WIN : COMPUTER_LOST;
+                return playAs.equals("x") ? GameResult.WIN : GameResult.LOST;
             if(countO == winCount )
-                return computerFigure.equals("o") ? COMPUTER_WIN : COMPUTER_LOST;
+                return playAs.equals("o") ? GameResult.WIN : GameResult.LOST;
             countX = countO = 0;
         }
         //vertical scan...
@@ -48,9 +62,9 @@ public abstract class TicTacToeAgent
                 countO = board[r][c].equals("o") ? countO + 1 : 0;
             }
             if(countX == winCount )
-                return computerFigure.equals("x") ? COMPUTER_WIN : COMPUTER_LOST;
+                return playAs.equals("x") ? GameResult.WIN : GameResult.LOST;
             if(countO == winCount )
-                return computerFigure.equals("o") ? COMPUTER_WIN : COMPUTER_LOST;
+                return playAs.equals("o") ? GameResult.WIN : GameResult.LOST;
             countX = countO = 0;
         }
         //diagonal scan left top
@@ -64,9 +78,9 @@ public abstract class TicTacToeAgent
                 countX = board[x][y].equals("x") ? countX + 1 : 0;
                 countO = board[x][y].equals("o") ? countO + 1 : 0;
                 if(countX == winCount )
-                    return computerFigure.equals("x") ? COMPUTER_WIN : COMPUTER_LOST;
+                    return playAs.equals("x") ? GameResult.WIN : GameResult.LOST;
                 if(countO == winCount )
-                    return computerFigure.equals("o") ? COMPUTER_WIN : COMPUTER_LOST;
+                    return playAs.equals("o") ? GameResult.WIN : GameResult.LOST;
             }
             countX = countO = 0;
         }
@@ -80,19 +94,19 @@ public abstract class TicTacToeAgent
                 countX = board[x][y].equals("x") ? countX + 1 : 0;
                 countO = board[x][y].equals("o") ? countO + 1 : 0;
                 if(countX == winCount )
-                    return computerFigure.equals("x") ? COMPUTER_WIN : COMPUTER_LOST;
+                    return playAs.equals("x") ? GameResult.WIN : GameResult.LOST;
                 if(countO == winCount )
-                    return computerFigure.equals("o") ? COMPUTER_WIN : COMPUTER_LOST;
+                    return playAs.equals("o") ? GameResult.WIN : GameResult.LOST;
             }
             countX = countO = 0;
         }
 
         if( matrixFull(board))
         {
-            return DRAW;
+            return GameResult.DRAW;
         }
 
-        return NOT_FINISHED;    // game is not over or matrix is full...
+        return GameResult.CONTINUE;    // game is not over or matrix is full...
     }
 
     /**
@@ -122,5 +136,24 @@ public abstract class TicTacToeAgent
             }
         }
         return count;
+    }
+
+
+    /**
+     * Copies arrays - deep copy of two dimensional array
+     * @param board
+     * @return copy of the board
+     */
+    public static String[][] copyBoard( final String[][] board )
+    {
+        final String[][] boardCopy = new String[3][3];
+        for( var r=0; r < board.length; r++ )
+        {
+            for( var c=0; c < board.length; c++ )
+            {
+                boardCopy[r][c] =  board[r][c];
+            }
+        }
+        return boardCopy;
     }
 }

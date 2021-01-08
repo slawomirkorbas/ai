@@ -1,10 +1,11 @@
 package com.ai.tictactoe
 
-import com.ai.tictactoe.agent.MinMaxTicTacToeAgent
-import com.ai.tictactoe.agent.RandomTicTacToeAgent
-import com.ai.tictactoe.model.neuralnetwork.general.ActivationFunction
+import com.ai.tictactoe.game.MinMaxTicTacToeAgent
+import com.ai.tictactoe.game.RandomTicTacToeAgent
+import com.ai.tictactoe.model.neuralnetwork.general.Activation
 import com.ai.tictactoe.model.neuralnetwork.general.NeuralNetwork
-import com.ai.tictactoe.util.BoardCell
+import com.ai.tictactoe.model.neuralnetwork.general.WeightInitializationType
+import com.ai.tictactoe.game.BoardCell
 import spock.lang.Specification
 import java.util.stream.Collectors
 
@@ -23,32 +24,32 @@ class TicTacToeMachineLearningSpec extends Specification
     {
         given:
             Double learningRate = 0.1d
-            final NeuralNetwork ann = new NeuralNetwork(learningRate)
+            final NeuralNetwork ann = new NeuralNetwork(learningRate, WeightInitializationType.XAVIER)
             ann.addLayer(18, "I", null, null)
-            ann.addLayer(12, "H1", 0.01d, ActivationFunction.TANH)
-            ann.addLayer(9 , "H2", 0.01d, ActivationFunction.TANH)
-            ann.addLayer(1 , "O" , 0.01d, ActivationFunction.RELU)
+            ann.addLayer(12, "H1", 0.01d, Activation.TANH)
+            ann.addLayer(9, "H2", 0.01d, Activation.TANH)
+            ann.addLayer(1 , "O" , 0.01d, Activation.RELU)
             int sampleNumber = 0
         and:
-            MinMaxTicTacToeAgent minMaxAgent = new MinMaxTicTacToeAgent()
-            RandomTicTacToeAgent randomAgent = new RandomTicTacToeAgent()
+            MinMaxTicTacToeAgent minMaxAgent = new MinMaxTicTacToeAgent("x")
+            RandomTicTacToeAgent randomAgent = new RandomTicTacToeAgent("o")
 
         when:
-            100.times {
+            5000.times {
                 String[][] board = [[" ", " ", " "], [" ", " ", " "], [" ", " ", " "]]
                 while(true) {
-                    BoardCell targetMoveX = minMaxAgent.getFirstNextMove(board, "x")
-                    List<Integer> input = TicTacToeFacade.board2Inputs_18(board)
-                    if (targetMoveX == null) {
-                        ann.train(input, [Double.valueOf(-1)], ++sampleNumber)
+                    BoardCell targetMoveX = minMaxAgent.getFirstNextMove(board)
+                    List<Integer> input = TicTacToeEngine.board2Inputs_9(board)
+                    if (targetMoveX == null) { // game finished
+                        //ann.train(input, [Double.valueOf(-1)], ++sampleNumber)
                         break
                     }
-                    Integer targetCellIndex = TicTacToeFacade.rowCol2CellIndexMap.get(targetMoveX.row + "_" + targetMoveX.col)
+                    Integer targetCellIndex = TicTacToeEngine.rowCol2CellIndexMap.get(targetMoveX.row + "_" + targetMoveX.col)
                     ann.train(input, [Double.valueOf(targetCellIndex)], ++sampleNumber)
                     board[targetMoveX.row][targetMoveX.col] = "x"
 
                     // player "O" turn...
-                    BoardCell nextMoveO = randomAgent.getNextMove(board, "o")
+                    BoardCell nextMoveO = randomAgent.getNextMove(board, )
                     if (nextMoveO == null) {
                         break
                     }
@@ -67,14 +68,14 @@ class TicTacToeMachineLearningSpec extends Specification
     {
         given:
             final Double learningRate = 0.1d
-            final NeuralNetwork ann = new NeuralNetwork(learningRate)
+            final NeuralNetwork ann = new NeuralNetwork(learningRate, WeightInitializationType.XAVIER)
             ann.addLayer(18, "I" , null, null)
-            ann.addLayer(15, "H1", 0.1d, ActivationFunction.SIGMOID)
-            ann.addLayer(12, "H2", 0.1d, ActivationFunction.SIGMOID)
-            ann.addLayer(9 , "O" , 0.1d, ActivationFunction.SIGMOID) // TODO apply softmax...
+            ann.addLayer(15, "H1", 0.1d, Activation.TANH)
+            ann.addLayer(12, "H2", 0.1d, Activation.TANH)
+            ann.addLayer(9 , "O" , 0.1d, Activation.SIGMOID) // TODO apply softmax...
         and:
-            MinMaxTicTacToeAgent playerX = new MinMaxTicTacToeAgent()
-            RandomTicTacToeAgent randomAgent = new RandomTicTacToeAgent()
+            MinMaxTicTacToeAgent playerX = new MinMaxTicTacToeAgent("x")
+            RandomTicTacToeAgent randomAgent = new RandomTicTacToeAgent("o")
         and:
             int sampleNumber = 0, gameNo = 0
             Integer batchSize = 1000
@@ -89,7 +90,7 @@ class TicTacToeMachineLearningSpec extends Specification
                     List<BoardCell> targetMovesX = playerX.computeBestMoves(board, "x")
                     if (targetMovesX.size() > 0)
                     {
-                        List<Integer> input = TicTacToeFacade.board2Inputs_18(board)
+                        List<Integer> input = TicTacToeEngine.board2Inputs_18(board)
                         List<Double> targetOutput = cords2TargetOutput_9(targetMovesX)
 
                         // train network only for newly experienced game states
@@ -139,10 +140,10 @@ class TicTacToeMachineLearningSpec extends Specification
     def 'Next predicted move should be different than the first one during a game'()
     {
         given:
-            TicTacToeFacade ann =  new TicTacToeFacade();
-            ann.init("neural-network-20210104-1836.ann")
+            TicTacToeEngine ann =  new TicTacToeEngine();
+            ann.init("neural-network-20210107-1527.ann")
         and:
-            RandomTicTacToeAgent randomAgent = new RandomTicTacToeAgent()
+            RandomTicTacToeAgent randomAgent = new RandomTicTacToeAgent("x")
             String[][] board = [["x", "o", " "], [" ", " ", " "], [" ", " ", " "]]
 
         when:

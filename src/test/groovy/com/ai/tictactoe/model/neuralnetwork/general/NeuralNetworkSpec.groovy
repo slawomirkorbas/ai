@@ -96,11 +96,10 @@ class NeuralNetworkSpec extends Specification
     def 'train test 1: 3 layer network can be trained to change binary input to decimal number in specific range'()
     {
         given:
-            final NeuralNetwork net = new NeuralNetwork(0.2d, WeightInitializationType.NONE)
+            final NeuralNetwork net = new NeuralNetwork(0.2d, WeightInitializationType.XAVIER)
             net.addLayer(2, "I", null, null)
             net.addLayer(3, "H1", 0.2d, Activation.TANH)
             net.addLayer(3, "H2", 0.1d, Activation.TANH)
-            //net.addLayer(3, "H3", 0.05d, Activation.SIGMOID)
             net.addLayer(1, "O", 0.05d, Activation.RELU)
             net.initialize()
 
@@ -119,8 +118,9 @@ class NeuralNetworkSpec extends Specification
         then:
             dataSet.forEach( d -> {
                 List<Double> predictedValues = net.predict(d.inputs)
-                System.out.println("expected: " + d.targets[0] + ". predicted: " + predictedValues[0])
-                d.targets[0] == predictedValues[0]
+                Integer prediction = Math.round(predictedValues[0])
+                System.out.println("expected: " + d.targets[0] + ". predicted: " + prediction)
+                assert (d.targets[0] == prediction)
             })
     }
 
@@ -140,7 +140,7 @@ class NeuralNetworkSpec extends Specification
                              [ inputs: [ 0, 1 ], targets: [1.0d] ],
                              [ inputs: [ 1, 0 ], targets: [0.0d] ],
                              [ inputs: [ 1, 1 ], targets: [1.0d] ] ]
-            200.times {
+            100.times {
                 int sampleNo = 0
                 dataSet.forEach( d -> {
                     net.train( d.inputs, d.targets, sampleNo++ )
@@ -151,7 +151,7 @@ class NeuralNetworkSpec extends Specification
             dataSet.forEach( d -> {
                 List<Double> predictedValues = net.predict(d.inputs)
                 System.out.println("expected: " + d.targets[0] + ". predicted: " + predictedValues[0])
-                d.targets[0] == predictedValues[0]
+                assert(d.targets[0] ==  Math.round(predictedValues[0]))
             })
     }
 

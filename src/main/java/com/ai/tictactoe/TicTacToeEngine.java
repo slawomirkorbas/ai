@@ -1,7 +1,13 @@
 package com.ai.tictactoe;
 
+import com.ai.tictactoe.game.GameResult;
+import com.ai.tictactoe.game.TicTacToeAgent;
+import com.ai.tictactoe.game.TicTacToeGame;
 import com.ai.tictactoe.model.neuralnetwork.general.NeuralNetwork;
-import com.ai.tictactoe.util.BoardCell;
+import com.ai.tictactoe.game.BoardCell;
+
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -11,7 +17,7 @@ import java.util.Map;
  * Wrapper class for neural network trained to play Tic-Tac-Toe game.
  *
  */
-public class TicTacToeFacade
+public class TicTacToeEngine
 {
     /** Neural network object **/
     NeuralNetwork ann;
@@ -45,7 +51,7 @@ public class TicTacToeFacade
     /**
      * Default constructor
      */
-    public TicTacToeFacade()
+    public TicTacToeEngine()
     {
 
     }
@@ -66,9 +72,11 @@ public class TicTacToeFacade
      */
     public BoardCell predictNextMove(final String[][] board)
     {
-        if( ann.getOutputLayer().getNeuronList().size() == 1)
+        final List<Integer> inputs = inputVectorFromBoard(board);
+        final List<Double> outputVector = ann.predict(inputs);
+
+        if( ann.isSingleOutput())
         {
-            List<Double> outputVector = ann.predict(board2Inputs_18(board));
             Integer cellIndex = (int)Math.round(outputVector.get(0));
             if(cellIndex < 0 || cellIndex > 8)
             {
@@ -76,25 +84,51 @@ public class TicTacToeFacade
             }
             return cellIndex2CellMap.get(cellIndex);
         }
-
-        //predict board fields preferences
-        List<Double> predictedFields = ann.predict(board2Inputs_18(board));
-
-        //pick most rated field from the list
-        int highRatedFieldIndex = 0;
-        double max = -1000000.0;
-        for (int i = 0; i < predictedFields.size(); i++)
+        else
         {
-            if (max < predictedFields.get(i))
+            //pick most rated field from the list
+            int highRatedFieldIndex = 0;
+            double max = -1000000.0;
+            for(int i = 0; i < outputVector.size(); i++)
             {
-                max = predictedFields.get(i);
-                highRatedFieldIndex = i;
+                if(max < outputVector.get(i))
+                {
+                    max = outputVector.get(i);
+                    highRatedFieldIndex = i;
+                }
             }
-        }
 
-        //maps cell index to Tic-Tac-Toe board coordinates
-        return cellIndex2CellMap.get(highRatedFieldIndex);
+            //maps cell index to Tic-Tac-Toe board coordinates
+            return cellIndex2CellMap.get(highRatedFieldIndex);
+        }
     }
+
+    /**
+     * Format input vector from given game board based on input layer size.
+     * @param board - game state board
+     * @return list of input values
+     */
+    private List<Integer> inputVectorFromBoard(final String[][] board)
+    {
+        int inputNeurons = ann.getInputLayer().getNeuronList().size();
+        final List<Integer> inputs;
+        switch(inputNeurons)
+        {
+            case 9:
+                inputs = board2Inputs_9(board);
+                break;
+            case 18:
+                inputs = board2Inputs_18(board);
+                break;
+            case 27:
+                inputs = board2Inputs_27(board);
+                break;
+            default:
+                inputs = null;
+        }
+        return inputs;
+    }
+
 
     /**
      * Convert game board (2D string array) into list of 9 integer inputs where:
@@ -124,7 +158,7 @@ public class TicTacToeFacade
     }
 
     /**
-     *
+     * Convert board game to input vector of size 18
      * @param board
      * @return
      */
@@ -174,6 +208,42 @@ public class TicTacToeFacade
             }
         }
         return Arrays.asList(boardInputs);
+    }
+
+
+    /**
+     * Confronts two TicTacToe agents so they play multiple games. Each game is stored along with
+     * all states(boards) and final result.
+     * @param playerX - first agent playing with "x"
+     * @param playerO - second agent playing with "o"
+     * @param maxBatchSize - maximum games to play
+     * @return
+     */
+    public List<TicTacToeGame> generateGames(final TicTacToeAgent playerX,
+                                             final TicTacToeAgent playerO,
+                                             final Integer maxBatchSize)
+    {
+        final Map<String, TicTacToeGame> uniqueGamesMap = new HashMap<>();
+        Integer total = 0;
+        while(++total <= maxBatchSize)
+        {
+            GameResult result = GameResult.CONTINUE;
+            TicTacToeGame newGame = new TicTacToeGame();
+            TicTacToeAgent currentPlayer = playerO;
+            while(!newGame.isFinished())
+            {
+                currentPlayer = currentPlayer == playerX ? playerO : playerX; // switch player
+                result = currentPlayer.doMove(newGame.board);
+                newGame.update(result);
+            }
+            if(result == GameResult.WIN)
+            {
+                newGame.whoWon = currentPlayer.playAs;
+            }
+            uniqueGamesMap.put(newGame.getKey(), newGame);
+            System.out.println("Played: " + total + ", unique stored: " + uniqueGamesMap.size());
+        }
+        return new ArrayList<>(uniqueGamesMap.values());
     }
 
 }

@@ -1,6 +1,4 @@
-package com.ai.tictactoe.agent;
-
-import com.ai.tictactoe.util.BoardCell;
+package com.ai.tictactoe.game;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,16 +10,21 @@ import java.util.Random;
  */
 public class MinMaxTicTacToeAgent extends TicTacToeAgent
 {
+    public MinMaxTicTacToeAgent(final String playAs)
+    {
+        super(playAs);
+    }
+
     /**
      * Return null if there is no move possible as the matrix is full. Otherwise returns one (random) of the
      * best scored moves from computed list.
      * @param board - current game state
-     * @param figure - actual figure for the next move (engine)
      * @return BoardCell
      */
-    public BoardCell getNextMove(final String[][] board, final String figure)
+    @Override
+    public BoardCell getNextMove(final String[][] board)
     {
-        List<BoardCell> bestPositions = computeBestMoves(board, figure);
+        List<BoardCell> bestPositions = computeBestMoves(board, this.playAs);
         if(bestPositions.size() > 0)
         {
             // pick randomly best move from the list of best moves collected...
@@ -56,10 +59,9 @@ public class MinMaxTicTacToeAgent extends TicTacToeAgent
      */
     public List<BoardCell> computeBestMoves(final String[][] board, final String figure)
     {
-        computerFigure = figure;
         List<BoardCell> bestPositions = new ArrayList<>();
         Integer maxPts = null;
-        if(gameState(board) == NOT_FINISHED)
+        if(gameState(board) == GameResult.CONTINUE)
         {
             for(int r = 0; r < board.length; r++)
             {
@@ -67,7 +69,7 @@ public class MinMaxTicTacToeAgent extends TicTacToeAgent
                 {
                     if(board[r][c].trim().isEmpty())
                     {
-                        String[][] matrixCopy = copyMatrix(board);
+                        String[][] matrixCopy = copyBoard(board);
                         matrixCopy[r][c] = figure;
                         Integer pts = evaluateGames(matrixCopy, toggle(figure), 0);
                         if(maxPts == null || pts == maxPts)
@@ -100,26 +102,26 @@ public class MinMaxTicTacToeAgent extends TicTacToeAgent
     {
         Integer min = null;
         Integer max = null;
-        Integer gameResult = gameState(board);
-        if( gameResult == COMPUTER_LOST )
+        GameResult gameResult = gameState(board);
+        if( gameResult == GameResult.LOST )
         {
             result = -10;
         }
-        else if( gameResult == COMPUTER_WIN )
+        else if( gameResult == GameResult.WIN )
         {
             result = 10;
         }
-        else if( gameResult == DRAW )
+        else if( gameResult == GameResult.DRAW )
         {
             result = 0;
         }
-        else if( gameResult == NOT_FINISHED )
+        else if( gameResult == GameResult.CONTINUE )
         {
             for( int r=0; r < board.length; r++ )
             {
                 for( int c=0; c < board.length; c++ )
                 {
-                    String[][] boardCopy = copyMatrix(board);
+                    String[][] boardCopy = copyBoard(board);
                     if( boardCopy[r][c].trim().isEmpty())
                     {
                         boardCopy[r][c] = figure;
@@ -144,29 +146,11 @@ public class MinMaxTicTacToeAgent extends TicTacToeAgent
 
     boolean isOpponentsTurn(final String currentFigure)
     {
-        return  !currentFigure.equals(computerFigure);
+        return  !currentFigure.equals(playAs);
     }
 
     String toggle(final String figure)
     {
         return figure.equals("x") ? "o" : "x";
-    }
-
-    /**
-     * Copies arrays - deep copy of two dimensional array
-     * @param board
-     * @return copy of the board
-     */
-    String[][] copyMatrix( final String[][] board )
-    {
-        final String[][] boardCopy = new String[3][3];
-        for( var r=0; r < board.length; r++ )
-        {
-            for( var c=0; c < board.length; c++ )
-            {
-                boardCopy[r][c] =  board[r][c];
-            }
-        }
-        return boardCopy;
     }
 }

@@ -1,4 +1,4 @@
-package com.ai.tictactoe.util;
+package com.ai.tictactoe.game;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
