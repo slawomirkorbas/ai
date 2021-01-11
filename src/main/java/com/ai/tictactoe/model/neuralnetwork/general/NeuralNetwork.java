@@ -25,7 +25,10 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 /**
@@ -46,6 +49,14 @@ public class NeuralNetwork implements Serializable
 
     /** Weight initializer **/
     private static final Double DEFAULT_LEARNING_RATE = 0.01d;
+
+    /** Derivatives of specific loss functions **/
+    public static final Map<LossFunction, BiFunction<Double, Double, Double>> lossDerivatives = new HashMap<>();
+    static
+    {
+        lossDerivatives.put( LossFunction.MSE, (t, y) -> -(t - y));
+        lossDerivatives.put( LossFunction.CROSS_ENTROPY, (t, y) -> y*(1.0 -y)); // for dEi/douti
+    }
 
     /** List of layers**/
     @Getter
@@ -105,69 +116,36 @@ public class NeuralNetwork implements Serializable
     }
 
     /**
-     * Adds new layer to the network.
-     * @param noOfNeurons - number of neurons within the layer
-     * @param initWeight - initial weight for edges between the new layer and previous layer. MAy be null if this is the first layer.
-     * @param layerName - layer name (should be unique)
-     * @param activationFunction - hyperbolic activation function to be applied for neurons during learning or evaluation process.
-     * @return newly created layer
+     * Adds the new layer to the network
+     * @param layer
+     * @return
      */
-    public Layer addLayer(final int noOfNeurons, final String layerName, final Double initWeight, ActivationFunction activationFunction)
+    public Layer add(final Layer layer)
     {
-        if(net.vertexSet().stream().anyMatch( n -> n.name.contains("_" + layerName + "_")))
+        if(layerExists(layer.getName()))
         {
             System.out.println("Layer with this name already exists.");
             return null;
         }
 
-        Layer newLayer;
         final int numberOfLayers = layers.size();
-
-        // find all neurons(vertexes) from previous layer
-        final Layer previousLayer = numberOfLayers > 0 ? layers.get(numberOfLayers- 1) : null;
-
-        for(int neuronIndex = 0; neuronIndex < noOfNeurons; neuronIndex++)
-        {
-            // add new neuron
-            Neuron newNeuron = new Neuron(numberOfLayers + "_" + layerName + "_" + neuronIndex, activationFunction);
-            net.addVertex(newNeuron);
-
-            // add weighted connections to previous layer
-            if(previousLayer != null)
-            {
-                for(Neuron neuron : previousLayer.getNeuronList())
-                {
-                    DefaultWeightedEdge newEdge = net.addEdge(neuron, newNeuron);
-                    net.setEdgeWeight(newEdge, initWeight);
-                }
-            }
-        }
-
-        final List<Neuron> neuronList = net.vertexSet().stream()
-                                           .filter(n -> n.name.startsWith(numberOfLayers + "_")).collect(Collectors.toList());
-        newLayer = new Layer(layerName, neuronList, activationFunction );
+        final Layer previousLayer = numberOfLayers > 0 ? layers.get(numberOfLayers-1) : null;
+        layer.connectToPreviousLayer(net, previousLayer);
 
         //create "Bias" neuron: biases are needed because if an input pattern are zero, the weights
         //may not be never changed for this pattern and the net could not learn it. This is kind of
         //"pseudo input" with constant value of "1"
-        if(previousLayer != null)
+        if(previousLayer != null) // For all layers except input layer
         {
-            Neuron bias = new Neuron(numberOfLayers + "_Bias_" + layerName + "_", null);
-            bias.setOutputValue(1.0);
-            net.addVertex(bias);
-
-            //connect the "Bias" neuron to each neuron from this layer
-            for(Neuron n : neuronList)
-            {
-                DefaultWeightedEdge newEdge = net.addEdge(bias, n);
-                net.setEdgeWeight(newEdge, initWeight);
-            }
+            layer.addBiases(net);
         }
+        layers.add(layer);
+        return layer;
+    }
 
-        // adds layer to the main list
-        layers.add(newLayer);
-
-        return newLayer;
+    private boolean layerExists(String name)
+    {
+        return net.vertexSet().stream().anyMatch( n -> n.name.contains("_" + name + "_"));
     }
 
     /**
@@ -252,11 +230,12 @@ public class NeuralNetwork implements Serializable
             {
                 final Neuron currentNeuron = currentLayer.get(i);
                 Double d_E_out = 0.0;
-                if( l == layers.size() - 1 ) // Output Layer:
+                if(currentLayer.isOutputLayer())
                 {
                     // Partial derivative of E (cost function value) with respect to Out (activation result(output))
                     // derivative of squared error: 0.5 * Math.pow(targets.get(i) - currentNeuron.getOutputValue(),2)
-                    d_E_out = -(targets.get(i) - currentNeuron.outputValue);
+                    d_E_out = lossDerivatives.get(
+                        ((OutputLayer)currentLayer).lossFunction).apply(targets.get(i), currentNeuron.outputValue);
                 }
                 else // Hidden layer:
                 {

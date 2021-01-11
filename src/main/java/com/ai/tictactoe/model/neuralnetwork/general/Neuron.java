@@ -125,6 +125,20 @@ public class Neuron implements Serializable
     }
 
     /**
+     * Activates (calculate an output value of the neuron) using SOFTMAX function which requires
+     * total sum of exponents of net values from other neurons in this layer.
+     * @param softmaxDenominator
+     * @param softMaxNormalizerConstant - maximum between all inputs(net values from layer)
+     *
+     * @return output value
+     */
+    public Double activateWithSoftmax(final Double softmaxDenominator, final Double softMaxNormalizerConstant)
+    {
+        outputValue = Math.exp(netVal - softMaxNormalizerConstant)/softmaxDenominator;
+        return outputValue;
+    }
+
+    /**
      *
      * @param d_E_out
      * @return
@@ -143,7 +157,7 @@ public class Neuron implements Serializable
     final Map<DefaultWeightedEdge, Double> avgGradientPerInputWeightMap = new HashMap<>();
 
     /**
-     *
+     * Not used so far...
      * @param inputEdge
      * @param sampleNo
      * @param d_Etotal_w

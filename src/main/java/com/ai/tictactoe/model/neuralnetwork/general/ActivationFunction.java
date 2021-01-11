@@ -9,7 +9,7 @@ import java.util.function.Function;
  * Popular hyperbolic and derivatives of hyperbolic functions used in neural networks
  * as activation functions.
  */
-public interface ActivationFunction extends  Function<Double, Double>, Serializable
+public interface ActivationFunction extends Function<Double, Double>, Serializable
 {
 
 }

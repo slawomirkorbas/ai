@@ -3,7 +3,10 @@ package com.ai.tictactoe
 import com.ai.tictactoe.game.MinMaxTicTacToeAgent
 import com.ai.tictactoe.game.RandomTicTacToeAgent
 import com.ai.tictactoe.model.neuralnetwork.general.Activation
+import com.ai.tictactoe.model.neuralnetwork.general.Layer
+import com.ai.tictactoe.model.neuralnetwork.general.LossFunction
 import com.ai.tictactoe.model.neuralnetwork.general.NeuralNetwork
+import com.ai.tictactoe.model.neuralnetwork.general.OutputLayer
 import com.ai.tictactoe.model.neuralnetwork.general.WeightInitializationType
 import com.ai.tictactoe.game.BoardCell
 import spock.lang.Specification
@@ -25,10 +28,10 @@ class TicTacToeMachineLearningSpec extends Specification
         given:
             Double learningRate = 0.1d
             final NeuralNetwork ann = new NeuralNetwork(learningRate, WeightInitializationType.XAVIER)
-            ann.addLayer(18, "I", null, null)
-            ann.addLayer(12, "H1", 0.01d, Activation.TANH)
-            ann.addLayer(9, "H2", 0.01d, Activation.TANH)
-            ann.addLayer(1 , "O" , 0.01d, Activation.RELU)
+            ann.add(new Layer(18, "I", null, null))
+            ann.add(new Layer(12, "H1", 0.01d, Activation.TANH))
+            ann.add(new Layer(9, "H2", 0.01d, Activation.TANH))
+            ann.add(new OutputLayer(1 , "O" , 0.01d, Activation.RELU, LossFunction.MSE))
             int sampleNumber = 0
         and:
             MinMaxTicTacToeAgent minMaxAgent = new MinMaxTicTacToeAgent("x")
@@ -69,10 +72,10 @@ class TicTacToeMachineLearningSpec extends Specification
         given:
             final Double learningRate = 0.1d
             final NeuralNetwork ann = new NeuralNetwork(learningRate, WeightInitializationType.XAVIER)
-            ann.addLayer(18, "I" , null, null)
-            ann.addLayer(15, "H1", 0.1d, Activation.TANH)
-            ann.addLayer(12, "H2", 0.1d, Activation.TANH)
-            ann.addLayer(9 , "O" , 0.1d, Activation.SIGMOID) // TODO apply softmax...
+            ann.add(new Layer(18, "I" , null, null))
+            ann.add(new Layer(15, "H1", 0.1d, Activation.TANH))
+            ann.add(new Layer(12, "H2", 0.1d, Activation.TANH))
+            ann.add(new OutputLayer(9 , "O" , 0.1d, Activation.SIGMOID,  LossFunction.MSE))
         and:
             MinMaxTicTacToeAgent playerX = new MinMaxTicTacToeAgent("x")
             RandomTicTacToeAgent randomAgent = new RandomTicTacToeAgent("o")

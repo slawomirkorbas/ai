@@ -2,7 +2,6 @@ package com.ai.tictactoe
 
 import com.ai.tictactoe.game.MinMaxTicTacToeAgent
 import com.ai.tictactoe.game.RandomTicTacToeAgent
-import com.ai.tictactoe.game.TicTacToeAgent
 import com.ai.tictactoe.game.TicTacToeGame
 import com.fasterxml.jackson.databind.ObjectMapper
 import spock.lang.Specification

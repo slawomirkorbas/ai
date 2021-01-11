@@ -1,10 +1,13 @@
 package com.ai.tictactoe.model.neuralnetwork.general;
 
 import lombok.Data;
+import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Class representing specific layer of neurons within the Neural network
@@ -15,23 +18,85 @@ public class Layer implements Serializable
     /** Unique layer name **/
     String name;
 
+    /** Number of layer **/
+    Integer layerNo;
+
     /** List of neurons within the layer **/
     List<Neuron> neuronList;
+
+    /** Initial weight for the neurons within layer **/
+    Double initialWeight;
 
     /** The activation function used by the neuron within the layer **/
     ActivationFunction activationFunction;
 
+    /** Normalizer constant for SOFTMAX activation function. This is used to decrease exponent value and avoid NaN outputs.
+     * - see: https://eli.thegreenplace.net/2016/the-softmax-function-and-its-derivative/
+     * **/
+    Double softMaxNormalizerConstant;
+
     /**
-     * Default constructor.
+     * Default constructor
      * @param name
-     * @param neuronList
+     * @param noOfNeurons
      * @param function
      */
-    public Layer(final String name, final List<Neuron> neuronList, ActivationFunction function)
+    public Layer(final int noOfNeurons,
+                 final String name,
+                 final Double initialWeight,
+                 ActivationFunction function)
     {
         this.name = name;
+        this.layerNo = 0;//layerNo;
+        this.initialWeight = initialWeight;
         this.activationFunction = function;
-        this.neuronList = neuronList;
+        this.neuronList = new ArrayList<>();
+        for(int neuronIndex = 0; neuronIndex < noOfNeurons; neuronIndex++)
+        {
+            // add new neuron
+            neuronList.add(new Neuron(layerNo + "_" + name + "_" + neuronIndex, activationFunction));
+        }
+    }
+
+    /**
+     * Connects all neurons of this layer to all neurons from previous layer (N:N)
+     * @param net
+     * @param previousLayer
+     */
+    public void connectToPreviousLayer(final SimpleDirectedWeightedGraph net,
+                                       final Layer previousLayer)
+    {
+        for(Neuron n : neuronList)
+        {
+            net.addVertex(n);
+            if(previousLayer != null)
+            {
+                for(Neuron neuron : previousLayer.getNeuronList())
+                {
+                    DefaultWeightedEdge newEdge = (DefaultWeightedEdge) net.addEdge(neuron, n);
+                    net.setEdgeWeight(newEdge, initialWeight);
+                }
+            }
+        }
+
+    }
+
+    /**
+     * Adds biases to all neurons within the layer
+     * @param net
+     */
+    public void addBiases(final SimpleDirectedWeightedGraph net)
+    {
+        Neuron bias = new Neuron(this.layerNo + "_Bias_" + name + "_", null);
+        bias.setOutputValue(1.0);
+        net.addVertex(bias);
+
+        //connect the "Bias" neuron to each neuron from this layer
+        for(Neuron n : neuronList)
+        {
+            DefaultWeightedEdge newEdge = (DefaultWeightedEdge)net.addEdge(bias, n);
+            net.setEdgeWeight(newEdge, initialWeight);
+        }
     }
 
     /**
@@ -60,10 +125,30 @@ public class Layer implements Serializable
      */
     public void forwardPass(final SimpleDirectedWeightedGraph net)
     {
-        for(Neuron neuron : this.neuronList)
+        if(activationFunction == Activation.SOFTMAX)
         {
-            neuron.calcNetValueFromInputs(net);
-            neuron.activate();
+            // Calculate net values and normalizing constant (maximum between all inputs, negated)
+            softMaxNormalizerConstant = null;
+            neuronList.stream().forEach(n -> {
+                Double max = n.calcNetValueFromInputs(net);
+                softMaxNormalizerConstant = softMaxNormalizerConstant == null ? max : Math.max(max, softMaxNormalizerConstant);
+            });
+
+            // calculate softmax denominator (sum of all exponents)
+            final Double softmaxDenominator = neuronList.stream().map(n -> Math.exp(n.netVal - softMaxNormalizerConstant)).reduce(0.0, Double::sum);
+
+            // calculate softmax value for each output
+            for(Neuron neuron : this.neuronList)
+            {
+                neuron.activateWithSoftmax(softmaxDenominator, softMaxNormalizerConstant);
+            }
+        }
+        else
+        {
+            neuronList.stream().forEach(n -> {
+                                            n.calcNetValueFromInputs(net);
+                                            n.activate();
+                                        });
         }
     }
 
@@ -96,5 +181,10 @@ public class Layer implements Serializable
             }
         }
         return true;
+    }
+
+    boolean isOutputLayer()
+    {
+        return false;
     }
 }
