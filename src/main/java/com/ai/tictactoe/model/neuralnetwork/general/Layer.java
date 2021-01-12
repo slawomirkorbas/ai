@@ -18,9 +18,6 @@ public class Layer implements Serializable
     /** Unique layer name **/
     String name;
 
-    /** Number of layer **/
-    Integer layerNo;
-
     /** List of neurons within the layer **/
     List<Neuron> neuronList;
 
@@ -47,14 +44,13 @@ public class Layer implements Serializable
                  ActivationFunction function)
     {
         this.name = name;
-        this.layerNo = 0;//layerNo;
         this.initialWeight = initialWeight;
         this.activationFunction = function;
         this.neuronList = new ArrayList<>();
         for(int neuronIndex = 0; neuronIndex < noOfNeurons; neuronIndex++)
         {
             // add new neuron
-            neuronList.add(new Neuron(layerNo + "_" + name + "_" + neuronIndex, activationFunction));
+            neuronList.add(new Neuron( name + "_" + neuronIndex, activationFunction));
         }
     }
 
@@ -63,7 +59,7 @@ public class Layer implements Serializable
      * @param net
      * @param previousLayer
      */
-    public void connectToPreviousLayer(final SimpleDirectedWeightedGraph net,
+    public void connectToPreviousLayer(final SimpleDirectedWeightedGraph<Neuron, DefaultWeightedEdge> net,
                                        final Layer previousLayer)
     {
         for(Neuron n : neuronList)
@@ -85,9 +81,9 @@ public class Layer implements Serializable
      * Adds biases to all neurons within the layer
      * @param net
      */
-    public void addBiases(final SimpleDirectedWeightedGraph net)
+    public void addBiases(final SimpleDirectedWeightedGraph<Neuron, DefaultWeightedEdge> net)
     {
-        Neuron bias = new Neuron(this.layerNo + "_Bias_" + name + "_", null);
+        Neuron bias = new Neuron("Bias_" + name + "_", null);
         bias.setOutputValue(1.0);
         net.addVertex(bias);
 
@@ -123,11 +119,11 @@ public class Layer implements Serializable
      * Calculate net(Z value) and activate each neuron
      * @param net - network graph
      */
-    public void forwardPass(final SimpleDirectedWeightedGraph net)
+    public void forwardPass(final SimpleDirectedWeightedGraph<Neuron, DefaultWeightedEdge> net)
     {
         if(activationFunction == Activation.SOFTMAX)
         {
-            // Calculate net values and normalizing constant (maximum between all inputs, negated)
+            // Calculate net values and normalizing constant (maximum between all inputs)
             softMaxNormalizerConstant = null;
             neuronList.stream().forEach(n -> {
                 Double max = n.calcNetValueFromInputs(net);

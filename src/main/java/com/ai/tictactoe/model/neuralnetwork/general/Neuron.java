@@ -71,7 +71,7 @@ public class Neuron implements Serializable
      * @param net
      * @return
      */
-    public List<DefaultWeightedEdge> getInputEdges(final SimpleDirectedWeightedGraph net)
+    public List<DefaultWeightedEdge> getInputEdges(final SimpleDirectedWeightedGraph<Neuron, DefaultWeightedEdge> net)
     {
         final List<DefaultWeightedEdge> inputEdges = new ArrayList<>();
         List<Neuron> predecessors = Graphs.predecessorListOf(net, this);
@@ -86,7 +86,7 @@ public class Neuron implements Serializable
      * @param net
      * @return
      */
-    public List<DefaultWeightedEdge> getOutputEdges(final SimpleDirectedWeightedGraph net)
+    public List<DefaultWeightedEdge> getOutputEdges(final SimpleDirectedWeightedGraph<Neuron, DefaultWeightedEdge> net)
     {
         final List<DefaultWeightedEdge> outputEdges = new ArrayList<>();
         List<Neuron> successors = Graphs.successorListOf(net, this);
@@ -100,7 +100,7 @@ public class Neuron implements Serializable
      * Calculate sum of input weights from all predecessors multiplied by predecessor output values
      * @return aggregated net value of the neuron
      */
-    public Double calcNetValueFromInputs(final SimpleDirectedWeightedGraph net)
+    public Double calcNetValueFromInputs(final SimpleDirectedWeightedGraph<Neuron, DefaultWeightedEdge> net)
     {
         List<Neuron> predecessors = Graphs.predecessorListOf(net, this);
         netVal = null;
@@ -134,7 +134,7 @@ public class Neuron implements Serializable
      */
     public Double activateWithSoftmax(final Double softmaxDenominator, final Double softMaxNormalizerConstant)
     {
-        outputValue = Math.exp(netVal - softMaxNormalizerConstant)/softmaxDenominator;
+        outputValue = (Math.exp(netVal - softMaxNormalizerConstant)/softmaxDenominator);
         return outputValue;
     }
 

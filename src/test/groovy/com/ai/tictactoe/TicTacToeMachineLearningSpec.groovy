@@ -28,10 +28,10 @@ class TicTacToeMachineLearningSpec extends Specification
         given:
             Double learningRate = 0.1d
             final NeuralNetwork ann = new NeuralNetwork(learningRate, WeightInitializationType.XAVIER)
-            ann.add(new Layer(18, "I", null, null))
-            ann.add(new Layer(12, "H1", 0.01d, Activation.TANH))
-            ann.add(new Layer(9, "H2", 0.01d, Activation.TANH))
-            ann.add(new OutputLayer(1 , "O" , 0.01d, Activation.RELU, LossFunction.MSE))
+            ann.layer(new Layer(18, "I", null, null))
+                .layer(new Layer(12, "H1", 0.01d, Activation.TANH))
+                .layer(new Layer(9, "H2", 0.01d, Activation.TANH))
+                .layer(new OutputLayer(1 , "O" , 0.01d, Activation.RELU, LossFunction.MSE))
             int sampleNumber = 0
         and:
             MinMaxTicTacToeAgent minMaxAgent = new MinMaxTicTacToeAgent("x")
@@ -72,10 +72,10 @@ class TicTacToeMachineLearningSpec extends Specification
         given:
             final Double learningRate = 0.1d
             final NeuralNetwork ann = new NeuralNetwork(learningRate, WeightInitializationType.XAVIER)
-            ann.add(new Layer(18, "I" , null, null))
-            ann.add(new Layer(15, "H1", 0.1d, Activation.TANH))
-            ann.add(new Layer(12, "H2", 0.1d, Activation.TANH))
-            ann.add(new OutputLayer(9 , "O" , 0.1d, Activation.SIGMOID,  LossFunction.MSE))
+            ann.layer(new Layer(18, "I" , null, null))
+                .layer(new Layer(15, "H1", 0.1d, Activation.TANH))
+                .layer(new Layer(12, "H2", 0.1d, Activation.TANH))
+                .layer(new OutputLayer(9 , "O" , 0.1d, Activation.SIGMOID,  LossFunction.MSE))
         and:
             MinMaxTicTacToeAgent playerX = new MinMaxTicTacToeAgent("x")
             RandomTicTacToeAgent randomAgent = new RandomTicTacToeAgent("o")

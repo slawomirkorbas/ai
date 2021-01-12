@@ -55,7 +55,7 @@ public class NeuralNetwork implements Serializable
     static
     {
         lossDerivatives.put( LossFunction.MSE, (t, y) -> -(t - y));
-        lossDerivatives.put( LossFunction.CROSS_ENTROPY, (t, y) -> y*(1.0 -y)); // for dEi/douti
+        lossDerivatives.put( LossFunction.CROSS_ENTROPY, (t, y) -> y - t);
     }
 
     /** List of layers**/
@@ -120,7 +120,7 @@ public class NeuralNetwork implements Serializable
      * @param layer
      * @return
      */
-    public Layer add(final Layer layer)
+    public NeuralNetwork layer(final Layer layer)
     {
         if(layerExists(layer.getName()))
         {
@@ -140,7 +140,7 @@ public class NeuralNetwork implements Serializable
             layer.addBiases(net);
         }
         layers.add(layer);
-        return layer;
+        return this;
     }
 
     private boolean layerExists(String name)
@@ -151,7 +151,7 @@ public class NeuralNetwork implements Serializable
     /**
      * Initialize weights using specific Weight initialization algorithm
      */
-    public void initialize()
+    public NeuralNetwork initialize()
     {
         switch(this.weightInitializationType)
         {
@@ -172,6 +172,7 @@ public class NeuralNetwork implements Serializable
                 });
                 break;
         }
+        return this;
     }
 
 
@@ -203,7 +204,6 @@ public class NeuralNetwork implements Serializable
         return layers.get(layers.size()-1).neuronList.stream().map(n -> n.outputValue).collect(Collectors.toList());
     }
 
-
     /**
      * Train neural network using supervised learning (example data targets).
      * Uses "back propagation" algorithm.
@@ -233,9 +233,7 @@ public class NeuralNetwork implements Serializable
                 if(currentLayer.isOutputLayer())
                 {
                     // Partial derivative of E (cost function value) with respect to Out (activation result(output))
-                    // derivative of squared error: 0.5 * Math.pow(targets.get(i) - currentNeuron.getOutputValue(),2)
-                    d_E_out = lossDerivatives.get(
-                        ((OutputLayer)currentLayer).lossFunction).apply(targets.get(i), currentNeuron.outputValue);
+                    d_E_out = lossDerivatives.get(((OutputLayer)currentLayer).lossFunction).apply(targets.get(i), currentNeuron.outputValue);
                 }
                 else // Hidden layer:
                 {
