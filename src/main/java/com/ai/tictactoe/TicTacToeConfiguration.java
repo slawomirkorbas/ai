@@ -26,7 +26,7 @@ public class TicTacToeConfiguration implements WebMvcConfigurer
     TicTacToeEngine ticTacToeNetwork()
     {
         TicTacToeEngine ann =  new TicTacToeEngine();
-        ann.init("net-9-36-18-9-1-20210108-1143.ann");
+        ann.init("net-18-12-9-20210112-1612.ann");
         return ann;
     }
 

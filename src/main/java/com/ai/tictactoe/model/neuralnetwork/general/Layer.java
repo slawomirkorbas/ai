@@ -81,7 +81,7 @@ public class Layer implements Serializable
      * Adds biases to all neurons within the layer
      * @param net
      */
-    public void addBiases(final SimpleDirectedWeightedGraph<Neuron, DefaultWeightedEdge> net)
+    public void addBias(final SimpleDirectedWeightedGraph<Neuron, DefaultWeightedEdge> net)
     {
         Neuron bias = new Neuron("Bias_" + name + "_", null);
         bias.setOutputValue(1.0);
@@ -90,7 +90,7 @@ public class Layer implements Serializable
         //connect the "Bias" neuron to each neuron from this layer
         for(Neuron n : neuronList)
         {
-            DefaultWeightedEdge newEdge = (DefaultWeightedEdge)net.addEdge(bias, n);
+            DefaultWeightedEdge newEdge = net.addEdge(bias, n);
             net.setEdgeWeight(newEdge, initialWeight);
         }
     }

@@ -1,11 +1,14 @@
 package com.ai.tictactoe
 
+import com.ai.tictactoe.game.GameResult
 import com.ai.tictactoe.game.MinMaxTicTacToeAgent
 import com.ai.tictactoe.game.RandomTicTacToeAgent
+import com.ai.tictactoe.game.TicTacToeAgent
 import com.ai.tictactoe.model.neuralnetwork.general.Activation
 import com.ai.tictactoe.model.neuralnetwork.general.Layer
 import com.ai.tictactoe.model.neuralnetwork.general.LossFunction
 import com.ai.tictactoe.model.neuralnetwork.general.NeuralNetwork
+import com.ai.tictactoe.model.neuralnetwork.general.NeuralNetworkFactory
 import com.ai.tictactoe.model.neuralnetwork.general.OutputLayer
 import com.ai.tictactoe.model.neuralnetwork.general.WeightInitializationType
 import com.ai.tictactoe.game.BoardCell
@@ -19,6 +22,67 @@ import java.util.stream.Collectors
  */
 class TicTacToeMachineLearningSpec extends Specification
 {
+    final NeuralNetworkFactory nnf = new NeuralNetworkFactory()
+
+    /**
+     * This supervised learning procedure is using two players: MinMaxTicTacToeAgent paying against RandomTicTacToeAgent
+     * @return file with "adjusted" neural network object
+     */
+    def 'supervised learning using ANN having vector SOFTMAX output : train new tic-tac-toe network and serialize to file'()
+    {
+        given:
+            NeuralNetwork ann = nnf.build()
+                    .layer(new Layer(18, "I", null, null))
+                    .layer(new Layer(12, "H1", 0.01d, Activation.TANH))
+                    .layer(new OutputLayer(9 , "O" , 0.01d, Activation.SOFTMAX, LossFunction.CROSS_ENTROPY))
+                    .learningRate(0.2d)
+                    .initialize(WeightInitializationType.XAVIER)
+        and:
+            int sampleNumber = 0
+            MinMaxTicTacToeAgent minMaxAgent = new MinMaxTicTacToeAgent("x")
+            RandomTicTacToeAgent randomAgent = new RandomTicTacToeAgent("o")
+
+        when:
+            500.times {
+                continueTraining(emptyBoard(), ann, minMaxAgent, randomAgent, sampleNumber)
+            }
+
+        then:
+            ann.serializeToFile()
+            true
+    }
+
+    def emptyBoard()
+    {
+        [[" ", " ", " "], [" ", " ", " "], [" ", " ", " "]]
+    }
+
+    void continueTraining(final String[][] board, final NeuralNetwork ann,
+                                MinMaxTicTacToeAgent agentX, TicTacToeAgent agentO, int sample)
+    {
+        List<BoardCell> targetMovesX = agentX.computeBestMoves(board, "x")
+        List<Integer> input = TicTacToeEngine.board2Inputs_18(board)
+        List<Double> targetOutput = cords2TargetOutput_9(targetMovesX)
+
+        // train the network
+        ann.train(input, targetOutput, ++sample)
+
+        for(BoardCell moveX : targetMovesX)
+        {
+            String[][] tmp = agentO.copyBoard(board)
+            tmp[moveX.row][moveX.col] = "x"
+            if(GameResult.CONTINUE == agentO.doMove(tmp))
+            {
+                continueTraining(tmp, ann, agentX, agentO, sample)
+            }
+            else
+            {
+                System.out.println("Training for game executed: " + boardToString(tmp))
+            }
+        }
+    }
+
+
     /**
      * This supervised learning procedure is using two players: MinMaxTicTacToeAgent paying against RandomTicTacToeAgent
      * @return file with "adjusted" neural network object
@@ -26,14 +90,15 @@ class TicTacToeMachineLearningSpec extends Specification
     def 'supervised learning using ANN with 1 output: train new tic-tac-toe network and serialize to file'()
     {
         given:
-            Double learningRate = 0.1d
-            final NeuralNetwork ann = new NeuralNetwork(learningRate, WeightInitializationType.XAVIER)
-            ann.layer(new Layer(18, "I", null, null))
-                .layer(new Layer(12, "H1", 0.01d, Activation.TANH))
-                .layer(new Layer(9, "H2", 0.01d, Activation.TANH))
-                .layer(new OutputLayer(1 , "O" , 0.01d, Activation.RELU, LossFunction.MSE))
-            int sampleNumber = 0
+            NeuralNetwork ann = nnf.build()
+                    .layer(new Layer(18, "I", null, null))
+                    .layer(new Layer(12, "H1", 0.01d, Activation.TANH))
+                    .layer(new Layer(9, "H2", 0.01d, Activation.TANH))
+                    .layer(new OutputLayer(1 , "O" , 0.01d, Activation.RELU, LossFunction.MSE))
+                    .learningRate(0.1d)
+                    .initialize(WeightInitializationType.XAVIER)
         and:
+            int sampleNumber = 0
             MinMaxTicTacToeAgent minMaxAgent = new MinMaxTicTacToeAgent("x")
             RandomTicTacToeAgent randomAgent = new RandomTicTacToeAgent("o")
 
@@ -70,12 +135,13 @@ class TicTacToeMachineLearningSpec extends Specification
     def 'supervised learning using ANN with 9 outputs: train new tic-tac-toe network and serialize to file'()
     {
         given:
-            final Double learningRate = 0.1d
-            final NeuralNetwork ann = new NeuralNetwork(learningRate, WeightInitializationType.XAVIER)
-            ann.layer(new Layer(18, "I" , null, null))
-                .layer(new Layer(15, "H1", 0.1d, Activation.TANH))
-                .layer(new Layer(12, "H2", 0.1d, Activation.TANH))
-                .layer(new OutputLayer(9 , "O" , 0.1d, Activation.SIGMOID,  LossFunction.MSE))
+            NeuralNetwork ann = nnf.build()
+                    .layer(new Layer(18, "I" , null, null))
+                    .layer(new Layer(15, "H1", 0.1d, Activation.TANH))
+                    .layer(new Layer(12, "H2", 0.1d, Activation.TANH))
+                    .layer(new OutputLayer(9 , "O" , 0.1d, Activation.SIGMOID,  LossFunction.MSE))
+                    .learningRate(0.1d)
+                    .initialize(WeightInitializationType.XAVIER)
         and:
             MinMaxTicTacToeAgent playerX = new MinMaxTicTacToeAgent("x")
             RandomTicTacToeAgent randomAgent = new RandomTicTacToeAgent("o")
@@ -144,7 +210,9 @@ class TicTacToeMachineLearningSpec extends Specification
     {
         given:
             TicTacToeEngine ann =  new TicTacToeEngine();
-            ann.init("neural-network-20210107-1527.ann")
+            ann.init("net-18-12-9-20210112-1612.ann")
+            //ann.init("net-18-12-9-20210112-1535.ann")
+            //ann.init("neural-network-20210107-1527.ann")
         and:
             RandomTicTacToeAgent randomAgent = new RandomTicTacToeAgent("x")
             String[][] board = [["x", "o", " "], [" ", " ", " "], [" ", " ", " "]]
@@ -153,7 +221,7 @@ class TicTacToeMachineLearningSpec extends Specification
             BoardCell moveX = ann.predictNextMove(board)
             board[moveX.row][moveX.col] = "x"
         and:
-            BoardCell moveO = randomAgent.getNextMove(board, "o")
+            BoardCell moveO = randomAgent.getNextMove(board)
             board[moveO.row][moveO.col] = "o"
         then:
             moveX != ann.predictNextMove(board)

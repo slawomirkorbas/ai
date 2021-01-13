@@ -64,33 +64,59 @@ public class NeuralNetwork implements Serializable
     private List<Layer> layers;
 
     /**
-     * No args constructor.
+     * Default - No args constructor.
      */
     public NeuralNetwork()
     {
         this.net = new SimpleDirectedWeightedGraph<>(DefaultWeightedEdge.class);
         this.layers = new ArrayList<>();
         this.learningRate = DEFAULT_LEARNING_RATE;
-        this.weightInitializationType = WeightInitializationType.NONE;
+        this.weightInitializationType = WeightInitializationType.DEFAULT;
     }
 
     /**
-     * Default constructor
-     *
-     * @param learningRate
-     * @param weightInitializationType
+     * Sets learning rate - if not called then <dode>DEFAULT_LEARNING_RATE</dode> is used
+     * @param rate new learning rate
+     * @return NeuralNetwork
      */
-    public NeuralNetwork(double learningRate, WeightInitializationType weightInitializationType)
+    public NeuralNetwork learningRate(final Double rate)
     {
-        this.net = new SimpleDirectedWeightedGraph<>(DefaultWeightedEdge.class);
-        this.layers = new ArrayList<>();
-        this.learningRate = learningRate;
-        this.weightInitializationType = weightInitializationType;
+        this.learningRate = rate;
+        return this;
     }
+
+    /**
+     * Initialize weights using specific Weight initialization algorithm
+     */
+    public NeuralNetwork initialize(WeightInitializationType initType)
+    {
+        this.weightInitializationType = initType;
+        switch(this.weightInitializationType)
+        {
+            case DEFAULT: break;
+            case XAVIER: // not sure if it is real XAVIER...
+                layers.stream().forEach( l -> {
+                    l.getNeuronList().stream().forEach( n -> {
+                        List<DefaultWeightedEdge> inputEdges = n.getInputEdges(net);
+                        if(inputEdges.size() > 0)
+                        {
+                            Double xavierWeight = Double.valueOf(1.0/inputEdges.size());
+                            for( DefaultWeightedEdge edge : inputEdges)
+                            {
+                                net.setEdgeWeight(edge, xavierWeight);
+                            }
+                        }
+                    });
+                });
+                break;
+        }
+        return this;
+    }
+
 
     /**
      * Returns an output layer
-     * @return
+     * @return Layer
      */
     public Layer getOutputLayer()
     {
@@ -137,7 +163,7 @@ public class NeuralNetwork implements Serializable
         //"pseudo input" with constant value of "1"
         if(previousLayer != null) // For all layers except input layer
         {
-            layer.addBiases(net);
+            layer.addBias(net);
         }
         layers.add(layer);
         return this;
@@ -146,33 +172,6 @@ public class NeuralNetwork implements Serializable
     private boolean layerExists(String name)
     {
         return net.vertexSet().stream().anyMatch( n -> n.name.contains("_" + name + "_"));
-    }
-
-    /**
-     * Initialize weights using specific Weight initialization algorithm
-     */
-    public NeuralNetwork initialize()
-    {
-        switch(this.weightInitializationType)
-        {
-            case NONE: break;
-            case XAVIER: // not sure if it is real XAVIER...
-                layers.stream().forEach( l -> {
-                    l.getNeuronList().stream().forEach( n -> {
-                        List<DefaultWeightedEdge> inputEdges = n.getInputEdges(net);
-                        if(inputEdges.size() > 0)
-                        {
-                            Double xavierWeight = Double.valueOf(1.0/inputEdges.size());
-                            for( DefaultWeightedEdge edge : inputEdges)
-                            {
-                                net.setEdgeWeight(edge, xavierWeight);
-                            }
-                        }
-                    });
-                });
-                break;
-        }
-        return this;
     }
 
 

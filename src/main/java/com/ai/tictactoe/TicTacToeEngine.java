@@ -6,7 +6,6 @@ import com.ai.tictactoe.game.TicTacToeGame;
 import com.ai.tictactoe.model.neuralnetwork.general.NeuralNetwork;
 import com.ai.tictactoe.game.BoardCell;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;

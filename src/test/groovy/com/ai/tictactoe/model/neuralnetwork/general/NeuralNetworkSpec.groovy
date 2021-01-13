@@ -5,15 +5,16 @@ import spock.lang.Unroll
 
 class NeuralNetworkSpec extends Specification
 {
+    final NeuralNetworkFactory nnf = new NeuralNetworkFactory()
+
     def "addLayer: works as expected"()
     {
-        given:
-            double learningRate = 0.01
-            NeuralNetwork net = new NeuralNetwork(learningRate, WeightInitializationType.NONE)
-
         when:
-            net.layer(new Layer(27,  "P", null, null))
+            NeuralNetwork net = nnf.build()
+               .layer(new Layer(27,  "P", null, null))
                .layer(new Layer(9, "H", 0.01d, Activation.TANH))
+               .learningRate(0.01d)
+               .initialize(WeightInitializationType.DEFAULT)
 
         then:
             net.getLayers().get(0).numberOfNeurons() == 27
@@ -23,10 +24,11 @@ class NeuralNetworkSpec extends Specification
     def "visualize: creates PNG file with neural network graph"()
     {
         given:
-            double learningRate = 0.01
-            NeuralNetwork net = new NeuralNetwork(learningRate, WeightInitializationType.NONE)
-            net.layer(new Layer(4, "P", null, null))
+            NeuralNetwork net = nnf.build()
+               .layer(new Layer(4, "P", null, null))
                .layer(new OutputLayer(2, "H", 0.01d, Activation.TANH,  LossFunction.MSE))
+               .learningRate(0.01d)
+               .initialize(WeightInitializationType.DEFAULT)
 
         when:
             File netImageFile = net.visualize()
@@ -38,10 +40,12 @@ class NeuralNetworkSpec extends Specification
     def 'predict: returns vector of expected size'()
     {
         given:
-            NeuralNetwork net = new NeuralNetwork(0.01, WeightInitializationType.NONE)
-            net.layer(new Layer(5, "I", null, null))
+            NeuralNetwork net = nnf.build()
+               .layer(new Layer(5, "I", null, null))
                .layer(new Layer(3, "H", 0.01d, Activation.SIGMOID))
                .layer(new OutputLayer(2, "O", 0.01d, Activation.TANH, LossFunction.MSE))
+               .learningRate(0.01d)
+               .initialize(WeightInitializationType.DEFAULT)
         and:
             List<Integer> inputs = [ 1, 0, 1, 0, 1]
 
@@ -59,9 +63,11 @@ class NeuralNetworkSpec extends Specification
     def 'train: cost function value is minimized after executing specified number of train iterations'()
     {
         given:
-            NeuralNetwork net = new NeuralNetwork(0.2d, WeightInitializationType.NONE)
-            net.layer(new Layer(3, "I", null, null))
-               .layer(new Layer(2, "H", 0.1d, activationFunction))
+            NeuralNetwork net = nnf.build()
+                .layer(new Layer(3, "I", null, null))
+                .layer(new Layer(2, "H", 0.1d, activationFunction))
+                .learningRate(0.2d)
+                .initialize(WeightInitializationType.DEFAULT)
         and:
             List<Double> outputs = net.predict(inputs)
             List<Double> squaredErrors = []
@@ -96,12 +102,13 @@ class NeuralNetworkSpec extends Specification
     def 'train test 1: 3 layer network can be trained to change binary input to decimal number in specific range'()
     {
         given:
-            final NeuralNetwork net = new NeuralNetwork(0.2d, WeightInitializationType.XAVIER)
+            NeuralNetwork net = nnf.build()
             net.layer(new Layer(2, "I", null, null))
                 .layer(new Layer(3, "H1", 0.2d, Activation.TANH))
                 .layer(new Layer(3, "H2", 0.1d, Activation.TANH))
                 .layer(new OutputLayer(1, "O", 0.05d, Activation.RELU,  LossFunction.MSE))
-                .initialize()
+                .learningRate(0.2d)
+                .initialize(WeightInitializationType.XAVIER)
 
         when:
             List dataSet = [ [ inputs: [ 0, 0 ], targets: [0.0d] ],
@@ -127,12 +134,13 @@ class NeuralNetworkSpec extends Specification
     def 'train test 2: 4 layer network can be trained to change binary input to 1 if number is odd and to 0 if even'()
     {
         given:
-            final NeuralNetwork net = new NeuralNetwork(0.5d, WeightInitializationType.NONE)
-            net.layer(new Layer(2, "I", null, null))
+            NeuralNetwork net = nnf.build()
+                .layer(new Layer(2, "I", null, null))
                 .layer(new Layer(4, "H1", 0.3d, Activation.TANH))
                 .layer(new Layer(3, "H2", 0.2d, Activation.TANH))
                 .layer(new OutputLayer(1, "O", 0.1d, Activation.TANH, LossFunction.MSE))
-                .initialize()
+                .learningRate(0.5d)
+                .initialize(WeightInitializationType.DEFAULT)
 
         when:
             List dataSet = [ [ inputs: [ 0, 0 ], targets: [0.0d] ],
@@ -155,15 +163,16 @@ class NeuralNetworkSpec extends Specification
     }
 
 
-    def 'Network with SOFTMAX output can perform simple classification of odd and even numbers'()
+    def 'Network with SOFTMAX output can perform simple classification of ODD and EVEN numbers'()
     {
         given:
-            final NeuralNetwork net = new NeuralNetwork(0.5d, WeightInitializationType.XAVIER)
-            net.layer(new Layer(3, "I", null, null))
+            NeuralNetwork net = nnf.build()
+               .layer(new Layer(3, "I", null, null))
                .layer(new Layer(5, "H1", 0.3d, Activation.TANH))
                .layer(new Layer(3, "H2", 0.2d, Activation.TANH))
                .layer(new OutputLayer(2, "O" , 0.1d, Activation.SOFTMAX, LossFunction.CROSS_ENTROPY))
-               .initialize()
+               .learningRate(0.5d)
+               .initialize(WeightInitializationType.XAVIER)
 
 
         when:                                              // even, odd
@@ -185,7 +194,7 @@ class NeuralNetworkSpec extends Specification
                 dataSet.forEach( d -> {
                     List<Double> predictedValues = net.predict(d.inputs)
                     System.out.println("target: " + d.targets[0] + ", " + d.targets[1] + ". predicted: " + predictedValues[0] + ", " + predictedValues[1])
-                  //  assert(d.targets[0] ==  Math.round(predictedValues[0]))
+                    assert(d.targets[0] ==  Math.round(predictedValues[0]))
         })
     }
 
@@ -193,12 +202,14 @@ class NeuralNetworkSpec extends Specification
     def 'serialization and deserialization works as expected'()
     {
         given:
-            final NeuralNetwork ann = new NeuralNetwork(0.2d, WeightInitializationType.NONE)
-            ann.layer(new Layer(5, "I", null, null))
+            NeuralNetwork net = nnf.build()
+               .layer(new Layer(5, "I", null, null))
                .layer(new Layer(3, "H", 0.2d, Activation.SIGMOID))
                .layer(new OutputLayer(1, "O", 1.0d, Activation.TANH, LossFunction.MSE))
+               .learningRate(0.2d)
+               .initialize(WeightInitializationType.DEFAULT)
         and:
-            final String annFileName = ann.serializeToFile()
+            final String annFileName = net.serializeToFile()
 
         when:
             final NeuralNetwork readAnn = NeuralNetwork.deserialize(annFileName)
