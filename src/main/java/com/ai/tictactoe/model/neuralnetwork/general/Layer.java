@@ -6,7 +6,6 @@ import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -27,10 +26,6 @@ public class Layer implements Serializable
     /** The activation function used by the neuron within the layer **/
     ActivationFunction activationFunction;
 
-    /** Normalizer constant for SOFTMAX activation function. This is used to decrease exponent value and avoid NaN outputs.
-     * - see: https://eli.thegreenplace.net/2016/the-softmax-function-and-its-derivative/
-     * **/
-    Double softMaxNormalizerConstant;
 
     /**
      * Default constructor
@@ -123,30 +118,19 @@ public class Layer implements Serializable
     {
         if(activationFunction == Activation.SOFTMAX)
         {
-            // Calculate net values and normalizing constant (maximum between all inputs)
-            softMaxNormalizerConstant = null;
-            neuronList.stream().forEach(n -> {
-                Double max = n.calcNetValueFromInputs(net);
-                softMaxNormalizerConstant = softMaxNormalizerConstant == null ? max : Math.max(max, softMaxNormalizerConstant);
-            });
-
-            // calculate softmax denominator (sum of all exponents)
-            final Double softmaxDenominator = neuronList.stream().map(n -> Math.exp(n.netVal - softMaxNormalizerConstant)).reduce(0.0, Double::sum);
-
-            // calculate softmax value for each output
-            for(Neuron neuron : this.neuronList)
-            {
-                neuron.activateWithSoftmax(softmaxDenominator, softMaxNormalizerConstant);
-            }
+            neuronList.stream().forEach(n -> n.calcNetValue(net));
+            List<Double> netValuesVector = neuronList.stream().map(n -> n.netVal).collect(Collectors.toList());
+            neuronList.stream().forEach(n -> n.activateWithSoftmax(netValuesVector));
         }
         else
         {
             neuronList.stream().forEach(n -> {
-                                            n.calcNetValueFromInputs(net);
+                                            n.calcNetValue(net);
                                             n.activate();
                                         });
         }
     }
+
 
     @Override
     public int hashCode()

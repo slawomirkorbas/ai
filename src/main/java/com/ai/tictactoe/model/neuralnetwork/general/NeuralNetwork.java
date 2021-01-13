@@ -142,11 +142,60 @@ public class NeuralNetwork implements Serializable
     }
 
     /**
+     * Adds new input layer
+     * @param noOfNeurons
+     * @param name
+     * @return
+     */
+    public NeuralNetwork input(final int noOfNeurons,
+                                final String name)
+    {
+        layer(new Layer(noOfNeurons, name, null, null));
+        return this;
+    }
+
+    /**
+     * Adds new hidden layer
+     * @param noOfNeurons
+     * @param name
+     * @param initialWeight
+     * @param activationFunc
+     * @return
+     */
+    public NeuralNetwork hidden(final int noOfNeurons,
+                                final String name,
+                                final Double initialWeight,
+                                ActivationFunction activationFunc)
+    {
+        layer(new Layer(noOfNeurons, name, initialWeight, activationFunc));
+        return this;
+    }
+
+    /**
+     * Adds new output layer
+     * @param noOfNeurons
+     * @param name
+     * @param initialWeight
+     * @param activationFunc
+     * @param lossFunc
+     * @return
+     */
+    public NeuralNetwork output(final int noOfNeurons,
+                                final String name,
+                                final Double initialWeight,
+                                ActivationFunction activationFunc,
+                                LossFunction lossFunc)
+    {
+        layer(new OutputLayer(noOfNeurons, name, initialWeight, activationFunc, lossFunc));
+        return this;
+    }
+
+    /**
      * Adds the new layer to the network
      * @param layer
      * @return
      */
-    public NeuralNetwork layer(final Layer layer)
+    private NeuralNetwork layer(final Layer layer)
     {
         if(layerExists(layer.getName()))
         {
@@ -234,7 +283,7 @@ public class NeuralNetwork implements Serializable
                     // Partial derivative of E (cost function value) with respect to Out (activation result(output))
                     d_E_out = lossDerivatives.get(((OutputLayer)currentLayer).lossFunction).apply(targets.get(i), currentNeuron.outputValue);
                 }
-                else // Hidden layer:
+                else // Hidden layer
                 {
                     // Partial derivatives of Output(activation function results) with respect to Net value of the neuron
                     List<DefaultWeightedEdge> outputEdges = currentNeuron.getOutputEdges(net);
@@ -345,6 +394,7 @@ public class NeuralNetwork implements Serializable
         }
         catch(IOException | ClassNotFoundException e)
         {
+            System.out.println("Error: Cannot load ANN file.");
             return null;
         }
     }

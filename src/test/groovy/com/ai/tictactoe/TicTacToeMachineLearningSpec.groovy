@@ -5,11 +5,9 @@ import com.ai.tictactoe.game.MinMaxTicTacToeAgent
 import com.ai.tictactoe.game.RandomTicTacToeAgent
 import com.ai.tictactoe.game.TicTacToeAgent
 import com.ai.tictactoe.model.neuralnetwork.general.Activation
-import com.ai.tictactoe.model.neuralnetwork.general.Layer
 import com.ai.tictactoe.model.neuralnetwork.general.LossFunction
 import com.ai.tictactoe.model.neuralnetwork.general.NeuralNetwork
 import com.ai.tictactoe.model.neuralnetwork.general.NeuralNetworkFactory
-import com.ai.tictactoe.model.neuralnetwork.general.OutputLayer
 import com.ai.tictactoe.model.neuralnetwork.general.WeightInitializationType
 import com.ai.tictactoe.game.BoardCell
 import spock.lang.Specification
@@ -22,7 +20,7 @@ import java.util.stream.Collectors
  */
 class TicTacToeMachineLearningSpec extends Specification
 {
-    final NeuralNetworkFactory nnf = new NeuralNetworkFactory()
+    static final NeuralNetworkFactory nnf = new NeuralNetworkFactory()
 
     /**
      * This supervised learning procedure is using two players: MinMaxTicTacToeAgent paying against RandomTicTacToeAgent
@@ -32,10 +30,11 @@ class TicTacToeMachineLearningSpec extends Specification
     {
         given:
             NeuralNetwork ann = nnf.build()
-                    .layer(new Layer(18, "I", null, null))
-                    .layer(new Layer(12, "H1", 0.01d, Activation.TANH))
-                    .layer(new OutputLayer(9 , "O" , 0.01d, Activation.SOFTMAX, LossFunction.CROSS_ENTROPY))
-                    .learningRate(0.2d)
+                    .input(18, "I")
+                    .hidden(27, "H1", 0.01d, Activation.TANH)
+                    .hidden(15, "H2", 0.01d, Activation.TANH)
+                    .output(9 , "O" , 0.01d, Activation.SOFTMAX, LossFunction.CROSS_ENTROPY)
+                    .learningRate(0.1d)
                     .initialize(WeightInitializationType.XAVIER)
         and:
             int sampleNumber = 0
@@ -43,21 +42,31 @@ class TicTacToeMachineLearningSpec extends Specification
             RandomTicTacToeAgent randomAgent = new RandomTicTacToeAgent("o")
 
         when:
-            500.times {
-                continueTraining(emptyBoard(), ann, minMaxAgent, randomAgent, sampleNumber)
+            int batchNo = 1
+            20.times {
+                System.out.println("Batch #" + batchNo++)
+                playGamesAndTrain(emptyBoard(), ann, minMaxAgent, randomAgent, sampleNumber)
             }
 
         then:
+            // smoke test for SOFTMAX results
+            String[][] board = [["x", "o", " "], [" ", " ", " "], [" ", " ", " "]]
+            List<Double> output = ann.predict(TicTacToeEngine.board2Inputs_18(board))
+            output.forEach( v -> {
+                System.out.print(v + ", ")
+                v >= 0.0d && v <= 1.0d // all values should be between 0 and 1
+            })
+        and:
             ann.serializeToFile()
             true
     }
 
-    def emptyBoard()
+    String[][] emptyBoard()
     {
         [[" ", " ", " "], [" ", " ", " "], [" ", " ", " "]]
     }
 
-    void continueTraining(final String[][] board, final NeuralNetwork ann,
+    void playGamesAndTrain(final String[][] board, final NeuralNetwork ann,
                                 MinMaxTicTacToeAgent agentX, TicTacToeAgent agentO, int sample)
     {
         List<BoardCell> targetMovesX = agentX.computeBestMoves(board, "x")
@@ -73,7 +82,7 @@ class TicTacToeMachineLearningSpec extends Specification
             tmp[moveX.row][moveX.col] = "x"
             if(GameResult.CONTINUE == agentO.doMove(tmp))
             {
-                continueTraining(tmp, ann, agentX, agentO, sample)
+                playGamesAndTrain(tmp, ann, agentX, agentO, sample)
             }
             else
             {
@@ -91,10 +100,10 @@ class TicTacToeMachineLearningSpec extends Specification
     {
         given:
             NeuralNetwork ann = nnf.build()
-                    .layer(new Layer(18, "I", null, null))
-                    .layer(new Layer(12, "H1", 0.01d, Activation.TANH))
-                    .layer(new Layer(9, "H2", 0.01d, Activation.TANH))
-                    .layer(new OutputLayer(1 , "O" , 0.01d, Activation.RELU, LossFunction.MSE))
+                    .input(18, "I", )
+                    .hidden(12, "H1", 0.01d, Activation.TANH)
+                    .hidden(9, "H2", 0.01d, Activation.TANH)
+                    .output(1 , "O" , 0.01d, Activation.RELU, LossFunction.MSE)
                     .learningRate(0.1d)
                     .initialize(WeightInitializationType.XAVIER)
         and:
@@ -136,10 +145,10 @@ class TicTacToeMachineLearningSpec extends Specification
     {
         given:
             NeuralNetwork ann = nnf.build()
-                    .layer(new Layer(18, "I" , null, null))
-                    .layer(new Layer(15, "H1", 0.1d, Activation.TANH))
-                    .layer(new Layer(12, "H2", 0.1d, Activation.TANH))
-                    .layer(new OutputLayer(9 , "O" , 0.1d, Activation.SIGMOID,  LossFunction.MSE))
+                    .input(18, "I" , null, null)
+                    .hidden(15, "H1", 0.1d, Activation.TANH)
+                    .hidden(12, "H2", 0.1d, Activation.TANH)
+                    .output(9 , "O" , 0.1d, Activation.SIGMOID,  LossFunction.MSE)
                     .learningRate(0.1d)
                     .initialize(WeightInitializationType.XAVIER)
         and:
@@ -210,7 +219,7 @@ class TicTacToeMachineLearningSpec extends Specification
     {
         given:
             TicTacToeEngine ann =  new TicTacToeEngine();
-            ann.init("net-18-12-9-20210112-1612.ann")
+            ann.init("net-18-27-15-9-20210113-1459.ann")
             //ann.init("net-18-12-9-20210112-1535.ann")
             //ann.init("neural-network-20210107-1527.ann")
         and:
@@ -246,7 +255,7 @@ class TicTacToeMachineLearningSpec extends Specification
         for(int i=0; i<board.length; i++) {
             for(int j=0; j<board.length; j++) {
                 if(!board[i][j].trim().isEmpty())
-                    invertedBoard[i][j] = board[i][j] == "x" ? "o" : "x"
+                    invertedBoard[i][j] = (board[i][j] == "x" ? "o" : "x")
             }
         }
         invertedBoard;

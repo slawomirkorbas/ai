@@ -13,7 +13,7 @@ public class Activation
     public static ActivationFunction LEAKY_RELU = net -> net <= 0 ? 0.01 * net : net;
     public static ActivationFunction SIGMOID    = net -> 1 / (1 + Math.exp(-1.0 * net));
     public static ActivationFunction TANH       = net -> Math.tanh(net);
-    public static ActivationFunction SOFTMAX    = net -> net; // this is just a constant telling that SOFTMAX with more parameters should be used
+    public static ActivationFunction SOFTMAX    = net -> Math.exp(net); // this is just nominator of softmax equation
 
     public static final Map<ActivationFunction, Function<Double, Double>> derivatives = new HashMap<>();
     static

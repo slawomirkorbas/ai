@@ -1,18 +1,19 @@
 package com.ai.tictactoe.model.neuralnetwork.general
 
+import org.jgrapht.graph.DefaultWeightedEdge
 import spock.lang.Specification
 import spock.lang.Unroll
 
 class NeuralNetworkSpec extends Specification
 {
-    final NeuralNetworkFactory nnf = new NeuralNetworkFactory()
+    static final NeuralNetworkFactory nnf = new NeuralNetworkFactory()
 
     def "addLayer: works as expected"()
     {
         when:
             NeuralNetwork net = nnf.build()
-               .layer(new Layer(27,  "P", null, null))
-               .layer(new Layer(9, "H", 0.01d, Activation.TANH))
+               .input(27,  "P", null, null)
+               .output(9, "H", 0.01d, Activation.TANH)
                .learningRate(0.01d)
                .initialize(WeightInitializationType.DEFAULT)
 
@@ -25,8 +26,8 @@ class NeuralNetworkSpec extends Specification
     {
         given:
             NeuralNetwork net = nnf.build()
-               .layer(new Layer(4, "P", null, null))
-               .layer(new OutputLayer(2, "H", 0.01d, Activation.TANH,  LossFunction.MSE))
+               .input(4, "P")
+               .output(2, "H", 0.01d, Activation.TANH,  LossFunction.MSE)
                .learningRate(0.01d)
                .initialize(WeightInitializationType.DEFAULT)
 
@@ -41,9 +42,9 @@ class NeuralNetworkSpec extends Specification
     {
         given:
             NeuralNetwork net = nnf.build()
-               .layer(new Layer(5, "I", null, null))
-               .layer(new Layer(3, "H", 0.01d, Activation.SIGMOID))
-               .layer(new OutputLayer(2, "O", 0.01d, Activation.TANH, LossFunction.MSE))
+               .input(5, "I")
+               .hidden(3, "H", 0.01d, Activation.SIGMOID)
+               .output(2, "O", 0.01d, Activation.TANH, LossFunction.MSE)
                .learningRate(0.01d)
                .initialize(WeightInitializationType.DEFAULT)
         and:
@@ -64,8 +65,8 @@ class NeuralNetworkSpec extends Specification
     {
         given:
             NeuralNetwork net = nnf.build()
-                .layer(new Layer(3, "I", null, null))
-                .layer(new Layer(2, "H", 0.1d, activationFunction))
+                .input(3, "I")
+                .hidden(2, "H", 0.1d, activationFunction)
                 .learningRate(0.2d)
                 .initialize(WeightInitializationType.DEFAULT)
         and:
@@ -103,10 +104,10 @@ class NeuralNetworkSpec extends Specification
     {
         given:
             NeuralNetwork net = nnf.build()
-            net.layer(new Layer(2, "I", null, null))
-                .layer(new Layer(3, "H1", 0.2d, Activation.TANH))
-                .layer(new Layer(3, "H2", 0.1d, Activation.TANH))
-                .layer(new OutputLayer(1, "O", 0.05d, Activation.RELU,  LossFunction.MSE))
+                .input(2, "I")
+                .hidden(3, "H1", 0.2d, Activation.TANH)
+                .hidden(3, "H2", 0.1d, Activation.TANH)
+                .output(1, "O", 0.05d, Activation.RELU,  LossFunction.MSE)
                 .learningRate(0.2d)
                 .initialize(WeightInitializationType.XAVIER)
 
@@ -135,10 +136,10 @@ class NeuralNetworkSpec extends Specification
     {
         given:
             NeuralNetwork net = nnf.build()
-                .layer(new Layer(2, "I", null, null))
-                .layer(new Layer(4, "H1", 0.3d, Activation.TANH))
-                .layer(new Layer(3, "H2", 0.2d, Activation.TANH))
-                .layer(new OutputLayer(1, "O", 0.1d, Activation.TANH, LossFunction.MSE))
+                .input(2, "I")
+                .hidden(4, "H1", 0.3d, Activation.TANH)
+                .hidden(3, "H2", 0.2d, Activation.TANH)
+                .output(1, "O", 0.1d, Activation.TANH, LossFunction.MSE)
                 .learningRate(0.5d)
                 .initialize(WeightInitializationType.DEFAULT)
 
@@ -167,10 +168,10 @@ class NeuralNetworkSpec extends Specification
     {
         given:
             NeuralNetwork net = nnf.build()
-               .layer(new Layer(3, "I", null, null))
-               .layer(new Layer(5, "H1", 0.3d, Activation.TANH))
-               .layer(new Layer(3, "H2", 0.2d, Activation.TANH))
-               .layer(new OutputLayer(2, "O" , 0.1d, Activation.SOFTMAX, LossFunction.CROSS_ENTROPY))
+               .input(3, "I")
+               .hidden(5, "H1", 0.3d, Activation.TANH)
+               .hidden(3, "H2", 0.2d, Activation.TANH)
+               .output(2, "O" , 0.1d, Activation.SOFTMAX, LossFunction.CROSS_ENTROPY)
                .learningRate(0.5d)
                .initialize(WeightInitializationType.XAVIER)
 
@@ -194,22 +195,48 @@ class NeuralNetworkSpec extends Specification
                 dataSet.forEach( d -> {
                     List<Double> predictedValues = net.predict(d.inputs)
                     System.out.println("target: " + d.targets[0] + ", " + d.targets[1] + ". predicted: " + predictedValues[0] + ", " + predictedValues[1])
-                    assert(d.targets[0] ==  Math.round(predictedValues[0]))
+                    assert(d.targets[0] == Math.round(predictedValues[0]))
         })
     }
 
+    @Unroll
+    def 'Softmax activation returns output probability values in range between 0 and 1 and they are sum upt to 1'()
+    {
+        given:
+            NeuralNetwork ann = nnf.build()
+                .input(4, "I")
+                .output(3, "O" , 100d, Activation.SOFTMAX, LossFunction.CROSS_ENTROPY)
+                .learningRate(0.5d)
+                .initialize(WeightInitializationType.DEFAULT)
+        and:
+
+        when:
+            ann.predict(input)
+
+        then:
+            Double totalSum = 0.0
+            ann.outputLayer.neuronList.forEach( v -> {
+                v.outputValue >= 0.0d && v.outputValue <= 1.0d
+                totalSum += v.outputValue
+            })
+        and:
+            totalSum == 1.0d
+
+        where:
+            input << [[0, 3, 55, -12], [1000, 3, 2233, -1222]]
+    }
 
     def 'serialization and deserialization works as expected'()
     {
         given:
-            NeuralNetwork net = nnf.build()
-               .layer(new Layer(5, "I", null, null))
-               .layer(new Layer(3, "H", 0.2d, Activation.SIGMOID))
-               .layer(new OutputLayer(1, "O", 1.0d, Activation.TANH, LossFunction.MSE))
+            NeuralNetwork ann = nnf.build()
+               .input(5, "I")
+               .hidden(3, "H", 0.2d, Activation.SIGMOID)
+               .output(1, "O", 1.0d, Activation.TANH, LossFunction.MSE)
                .learningRate(0.2d)
                .initialize(WeightInitializationType.DEFAULT)
         and:
-            final String annFileName = net.serializeToFile()
+            final String annFileName = ann.serializeToFile()
 
         when:
             final NeuralNetwork readAnn = NeuralNetwork.deserialize(annFileName)

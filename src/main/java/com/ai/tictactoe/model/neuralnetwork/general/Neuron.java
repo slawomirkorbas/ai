@@ -9,6 +9,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -91,7 +92,7 @@ public class Neuron implements Serializable
         final List<DefaultWeightedEdge> outputEdges = new ArrayList<>();
         List<Neuron> successors = Graphs.successorListOf(net, this);
         successors.forEach( n -> {
-            outputEdges.add((DefaultWeightedEdge)net.getEdge( this, n));
+            outputEdges.add(net.getEdge( this, n));
         });
         return outputEdges;
     }
@@ -100,13 +101,13 @@ public class Neuron implements Serializable
      * Calculate sum of input weights from all predecessors multiplied by predecessor output values
      * @return aggregated net value of the neuron
      */
-    public Double calcNetValueFromInputs(final SimpleDirectedWeightedGraph<Neuron, DefaultWeightedEdge> net)
+    public Double calcNetValue(final SimpleDirectedWeightedGraph<Neuron, DefaultWeightedEdge> net)
     {
         List<Neuron> predecessors = Graphs.predecessorListOf(net, this);
-        netVal = null;
+        netVal = 0.0;
         predecessors.forEach( n -> {
             Double weightTimesInputVal = n.getOutputValue() * net.getEdgeWeight(net.getEdge(n, this));
-            netVal = (netVal==null ? weightTimesInputVal : netVal + weightTimesInputVal);
+            netVal += weightTimesInputVal;
         });
         return netVal;
     }
@@ -127,14 +128,17 @@ public class Neuron implements Serializable
     /**
      * Activates (calculate an output value of the neuron) using SOFTMAX function which requires
      * total sum of exponents of net values from other neurons in this layer.
-     * @param softmaxDenominator
-     * @param softMaxNormalizerConstant - maximum between all inputs(net values from layer)
+     * @param netValues - net values from all neurons within the layer
      *
      * @return output value
      */
-    public Double activateWithSoftmax(final Double softmaxDenominator, final Double softMaxNormalizerConstant)
+    public Double activateWithSoftmax(final List<Double> netValues)
     {
-        outputValue = (Math.exp(netVal - softMaxNormalizerConstant)/softmaxDenominator);
+        Double maxNetVal = Collections.max(netValues);
+        Double totalExpSum = netValues.stream()
+                                      .map(netVal -> Math.exp(netVal - maxNetVal))
+                                      .reduce(0.0, Double::sum);
+        outputValue = (Math.exp(netVal - maxNetVal)/totalExpSum);
         return outputValue;
     }
 
