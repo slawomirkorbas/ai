@@ -1,5 +1,6 @@
 package com.ai.tictactoe;
 
+import com.ai.tictactoe.game.AnnTicTacToeAgent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -23,9 +24,9 @@ public class TicTacToeConfiguration implements WebMvcConfigurer
     private ApplicationContext applicationContext;
 
     @Bean
-    AnnTicTacToeAgent ticTacToeNetwork()
+    AnnTicTacToeAgent annTicTacToeAgent()
     {
-        AnnTicTacToeAgent ann =  new AnnTicTacToeAgent();
+        AnnTicTacToeAgent ann =  new AnnTicTacToeAgent("x");
         ann.init("net-18-12-9-20210112-1612.ann");
         return ann;
     }

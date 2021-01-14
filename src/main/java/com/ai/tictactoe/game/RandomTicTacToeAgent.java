@@ -21,7 +21,7 @@ public class RandomTicTacToeAgent extends TicTacToeAgent
     public BoardCell getNextMove(final String[][] board)
     {
         BoardCell freeCell = null;
-        List<BoardCell> availableCells = new ArrayList<>();
+        List<BoardCell> freeCells = new ArrayList<>();
         if(gameState(board) == GameResult.CONTINUE)
         {
             for(int r = 0; r < board.length; r++)
@@ -30,17 +30,15 @@ public class RandomTicTacToeAgent extends TicTacToeAgent
                 {
                     if(board[r][c].trim().isEmpty())
                     {
-                        availableCells.add(new BoardCell(r,c));
+                        freeCells.add(new BoardCell(r,c));
                     }
                 }
             }
+            if( freeCells.size() > 0)
+            {
+                freeCell = freeCells.get( freeCells.size() == 1 ? 0 : (new Random()).nextInt(freeCells.size() - 1));
+            }
         }
-
-        if(availableCells.size() > 0)
-        {
-            freeCell = availableCells.get((new Random()).nextInt(availableCells.size() - 1));
-        }
-
         return freeCell;
     }
 }

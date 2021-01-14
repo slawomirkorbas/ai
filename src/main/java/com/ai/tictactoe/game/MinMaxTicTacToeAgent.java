@@ -27,7 +27,7 @@ public class MinMaxTicTacToeAgent extends TicTacToeAgent
         List<BoardCell> bestPositions = computeBestMoves(board, this.playAs);
         if(bestPositions.size() > 0)
         {
-            // pick randomly best move from the list of best moves collected...
+            // pick randomly move from the list of best moves collected...
             int randomIndex = bestPositions.size() == 1 ? 0 : (new Random()).nextInt(bestPositions.size() - 1);
             return bestPositions.get(randomIndex);
         }

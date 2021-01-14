@@ -1,23 +1,22 @@
 package com.ai.tictactoe
 
-import com.ai.tictactoe.game.MinMaxTicTacToeAgent
 import com.ai.tictactoe.game.RandomTicTacToeAgent
 import com.ai.tictactoe.game.TicTacToeGame
 import com.fasterxml.jackson.databind.ObjectMapper
 import spock.lang.Specification
 import spock.lang.Unroll
 
-class AnnTicTacToeAgentSpec extends Specification {
+class TictactoeGamesGenerator extends Specification
+{
 
     @Unroll
     def "generateGames: plays MinMax vs Random and store games in JSON format"() throws IOException
     {
         given:
-            AnnTicTacToeAgent engine = new AnnTicTacToeAgent()
             ObjectMapper mapper = new ObjectMapper()
 
         when:
-            List<TicTacToeGame> totalGames = engine.generateGames(playerX, playerO, 10000)
+            List<TicTacToeGame> totalGames = TictactoeApplication.generateGames(playerX, playerO, 50000)
         then:
             totalGames.size() > 0
         and:
@@ -27,8 +26,8 @@ class AnnTicTacToeAgentSpec extends Specification {
 
         where:
             playerX                          | playerO                       | gameName
-            new MinMaxTicTacToeAgent("x")    | new MinMaxTicTacToeAgent("o") | "mm-vs-mm"
-            new MinMaxTicTacToeAgent("x")    | new RandomTicTacToeAgent("o") | "mm-vs-rnd"
-            new RandomTicTacToeAgent("x")    | new RandomTicTacToeAgent("o") | "rnd-vs-rnd"
+            //new MinMaxTicTacToeAgent("x")    | new MinMaxTicTacToeAgent("o") | "mmX-vs-mmO"
+            //new MinMaxTicTacToeAgent("x")    | new RandomTicTacToeAgent("o") | "mmX-vs-rndO"
+            new RandomTicTacToeAgent("x")    | new RandomTicTacToeAgent("o") | "rndX-vs-rndO"
     }
 }

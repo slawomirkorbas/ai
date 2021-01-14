@@ -1,6 +1,6 @@
 package com.ai.tictactoe.model.neuralnetwork.general
 
-import org.jgrapht.graph.DefaultWeightedEdge
+
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -15,7 +15,7 @@ class NeuralNetworkSpec extends Specification
                .input(27,  "P", null, null)
                .output(9, "H", 0.01d, TransferFunction.TANH)
                .learningRate(0.01d)
-               .initialize(WeightInitializationType.DEFAULT)
+               .initialize(WeightInitType.DEFAULT)
 
         then:
             net.getLayers().get(0).numberOfNeurons() == 27
@@ -29,7 +29,7 @@ class NeuralNetworkSpec extends Specification
                .input(4, "P")
                .output(2, "H", 0.01d, TransferFunction.TANH,  LossFunction.MSE)
                .learningRate(0.01d)
-               .initialize(WeightInitializationType.DEFAULT)
+               .initialize(WeightInitType.DEFAULT)
 
         when:
             File netImageFile = net.visualize()
@@ -46,7 +46,7 @@ class NeuralNetworkSpec extends Specification
                .hidden(3, "H", 0.01d, TransferFunction.SIGMOID)
                .output(2, "O", 0.01d, TransferFunction.TANH, LossFunction.MSE)
                .learningRate(0.01d)
-               .initialize(WeightInitializationType.DEFAULT)
+               .initialize(WeightInitType.DEFAULT)
         and:
             List<Integer> inputs = [ 1, 0, 1, 0, 1]
 
@@ -68,7 +68,7 @@ class NeuralNetworkSpec extends Specification
                 .input(3, "I")
                 .hidden(2, "H", 0.1d, activationFunction)
                 .learningRate(0.2d)
-                .initialize(WeightInitializationType.DEFAULT)
+                .initialize(WeightInitType.DEFAULT)
         and:
             List<Double> outputs = net.predict(inputs)
             List<Double> squaredErrors = []
@@ -109,7 +109,7 @@ class NeuralNetworkSpec extends Specification
                 .hidden(3, "H2", 0.1d, TransferFunction.TANH)
                 .output(1, "O", 0.05d, TransferFunction.RELU,  LossFunction.MSE)
                 .learningRate(0.2d)
-                .initialize(WeightInitializationType.XAVIER)
+                .initialize(WeightInitType.XAVIER)
 
         when:
             List dataSet = [ [ inputs: [ 0, 0 ], targets: [0.0d] ],
@@ -141,7 +141,7 @@ class NeuralNetworkSpec extends Specification
                 .hidden(3, "H2", 0.2d, TransferFunction.TANH)
                 .output(1, "O", 0.1d, TransferFunction.TANH, LossFunction.MSE)
                 .learningRate(0.5d)
-                .initialize(WeightInitializationType.DEFAULT)
+                .initialize(WeightInitType.DEFAULT)
 
         when:
             List dataSet = [ [ inputs: [ 0, 0 ], targets: [0.0d] ],
@@ -173,7 +173,7 @@ class NeuralNetworkSpec extends Specification
                .hidden(3, "H2", 0.2d, TransferFunction.TANH)
                .output(2, "O" , 0.1d, TransferFunction.SOFTMAX, LossFunction.CROSS_ENTROPY)
                .learningRate(0.5d)
-               .initialize(WeightInitializationType.XAVIER)
+               .initialize(WeightInitType.XAVIER)
 
 
         when:                                              // even, odd
@@ -207,7 +207,7 @@ class NeuralNetworkSpec extends Specification
                 .input(4, "I")
                 .output(3, "O" , 100d, TransferFunction.SOFTMAX, LossFunction.CROSS_ENTROPY)
                 .learningRate(0.5d)
-                .initialize(WeightInitializationType.DEFAULT)
+                .initialize(WeightInitType.DEFAULT)
         and:
 
         when:
@@ -234,7 +234,7 @@ class NeuralNetworkSpec extends Specification
                .hidden(3, "H", 0.2d, TransferFunction.SIGMOID)
                .output(1, "O", 1.0d, TransferFunction.TANH, LossFunction.MSE)
                .learningRate(0.2d)
-               .initialize(WeightInitializationType.DEFAULT)
+               .initialize(WeightInitType.DEFAULT)
         and:
             final String annFileName = ann.serializeToFile()
 

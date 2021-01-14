@@ -45,7 +45,7 @@ public class NeuralNetwork implements Serializable
     private double learningRate = DEFAULT_LEARNING_RATE;
 
     /** Algorithm identifier which is used to initialize weights between layer **/
-    private WeightInitializationType weightInitializationType;
+    private WeightInitType weightInitType;
 
     /** Weight initializer **/
     private static final Double DEFAULT_LEARNING_RATE = 0.01d;
@@ -71,7 +71,7 @@ public class NeuralNetwork implements Serializable
         this.net = new SimpleDirectedWeightedGraph<>(DefaultWeightedEdge.class);
         this.layers = new ArrayList<>();
         this.learningRate = DEFAULT_LEARNING_RATE;
-        this.weightInitializationType = WeightInitializationType.DEFAULT;
+        this.weightInitType = WeightInitType.DEFAULT;
     }
 
     /**
@@ -88,10 +88,10 @@ public class NeuralNetwork implements Serializable
     /**
      * Initialize weights using specific Weight initialization algorithm
      */
-    public NeuralNetwork initialize(WeightInitializationType initType)
+    public NeuralNetwork initialize(WeightInitType initType)
     {
-        this.weightInitializationType = initType;
-        switch(this.weightInitializationType)
+        this.weightInitType = initType;
+        switch(this.weightInitType)
         {
             case DEFAULT: break;
             case XAVIER: // not sure if it is real XAVIER...

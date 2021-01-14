@@ -35,7 +35,7 @@ public abstract class TicTacToeAgent
      * @param board - game state
      * @return 0 - game is not finished, 1 - 'x' has won, -1 - 'o' has won
      */
-    GameResult gameState(final String[][] board )
+    public GameResult gameState(final String[][] board )
     {
         // horizontal scan...
         int countX = 0, countO = 0, winCount = 3;

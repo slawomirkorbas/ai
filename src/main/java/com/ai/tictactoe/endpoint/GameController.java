@@ -1,6 +1,6 @@
 package com.ai.tictactoe.endpoint;
 
-import com.ai.tictactoe.AnnTicTacToeAgent;
+import com.ai.tictactoe.game.AnnTicTacToeAgent;
 import com.ai.tictactoe.dto.BoardDto;
 import com.ai.tictactoe.game.BoardCell;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +20,7 @@ public class GameController
 {
 
     @Autowired
-    AnnTicTacToeAgent ticTacToeNetwork;
+    AnnTicTacToeAgent annTicTacToeAgent;
 
     @GetMapping("/tictactoe/newBoard")//, produces = MediaType.APPLICATION_JSON_VALUE)
     BoardDto getNewGame()
@@ -31,8 +31,8 @@ public class GameController
     @PostMapping("/tictactoe/predict")//(name = "/tictactoe/predict", produces = MediaType.APPLICATION_JSON_VALUE)
     BoardDto predictNextMove(@RequestBody BoardDto boardDto, @RequestParam String userFigure)
     {
-        BoardCell nextMoveCell = ticTacToeNetwork.predictNextMove(boardDto.board);
-        boardDto.board[nextMoveCell.getRow()][nextMoveCell.getCol()] = userFigure.equals("x") ? "o" : "x";
+        BoardCell nextMoveCell = annTicTacToeAgent.getNextMove(boardDto.board);
+        boardDto.board[nextMoveCell.row][nextMoveCell.col] = userFigure.equals("x") ? "o" : "x";
         return boardDto;
     }
 }

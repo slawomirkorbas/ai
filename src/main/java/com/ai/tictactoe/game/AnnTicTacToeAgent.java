@@ -1,22 +1,16 @@
-package com.ai.tictactoe;
+package com.ai.tictactoe.game;
 
-import com.ai.tictactoe.game.GameResult;
-import com.ai.tictactoe.game.TicTacToeAgent;
-import com.ai.tictactoe.game.TicTacToeGame;
 import com.ai.tictactoe.model.neuralnetwork.general.NeuralNetwork;
-import com.ai.tictactoe.game.BoardCell;
-
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Wrapper class for neural network trained to play Tic-Tac-Toe game.
- *
+ * TicTacToe agent playing game by predicting moves using internal (trained) neural network.
+
  */
-public class AnnTicTacToeAgent
+public class AnnTicTacToeAgent extends TicTacToeAgent
 {
     /** Neural network object **/
     NeuralNetwork ann;
@@ -50,9 +44,9 @@ public class AnnTicTacToeAgent
     /**
      * Default constructor
      */
-    public AnnTicTacToeAgent()
+    public AnnTicTacToeAgent(final String playAs)
     {
-
+        super(playAs);
     }
 
     /**
@@ -64,14 +58,20 @@ public class AnnTicTacToeAgent
         ann = NeuralNetwork.deserialize(annFileName);
     }
 
+    @Override
+    public BoardCell getNextMove(final String[][] board)
+    {
+        return predictNextMove(board);
+    }
+
     /**
      * Predict next move for given board state
      * @param board - 2D string array representing Tic-Tac-Toe board
      * @return Cell object with row nad column
      */
-    public BoardCell predictNextMove(final String[][] board)
+    private BoardCell predictNextMove(final String[][] board)
     {
-        final List<Integer> inputs = inputVectorFromBoard(board);
+        final List<Integer> inputs = inputVectorFromBoard(board, ann.getInputLayer().numberOfNeurons());
         final List<Double> outputVector = ann.predict(inputs);
 
         if(ann.isSingleOutput())
@@ -107,11 +107,10 @@ public class AnnTicTacToeAgent
      * @param board - game state board
      * @return list of input values
      */
-    private List<Integer> inputVectorFromBoard(final String[][] board)
+    public static List<Integer> inputVectorFromBoard(final String[][] board, int inputSize)
     {
-        int inputNeurons = ann.getInputLayer().getNeuronList().size();
         final List<Integer> inputs;
-        switch(inputNeurons)
+        switch(inputSize)
         {
             case 9:
                 inputs = board2Inputs_9(board);
@@ -207,42 +206,6 @@ public class AnnTicTacToeAgent
             }
         }
         return Arrays.asList(boardInputs);
-    }
-
-
-    /**
-     * Confronts two TicTacToe agents so they play multiple games. Each game is stored along with
-     * all states(boards) and final result.
-     * @param playerX - first agent playing with "x"
-     * @param playerO - second agent playing with "o"
-     * @param maxBatchSize - maximum games to play
-     * @return
-     */
-    public List<TicTacToeGame> generateGames(final TicTacToeAgent playerX,
-                                             final TicTacToeAgent playerO,
-                                             final Integer maxBatchSize)
-    {
-        final Map<String, TicTacToeGame> uniqueGamesMap = new HashMap<>();
-        Integer total = 0;
-        while(++total <= maxBatchSize)
-        {
-            GameResult result = GameResult.CONTINUE;
-            TicTacToeGame newGame = new TicTacToeGame();
-            TicTacToeAgent currentPlayer = playerO;
-            while(!newGame.isFinished())
-            {
-                currentPlayer = currentPlayer == playerX ? playerO : playerX; // switch player
-                result = currentPlayer.doMove(newGame.board);
-                newGame.update(result);
-            }
-            if(result == GameResult.WIN)
-            {
-                newGame.whoWon = currentPlayer.playAs;
-            }
-            uniqueGamesMap.put(newGame.getKey(), newGame);
-            System.out.println("Played: " + total + ", unique stored: " + uniqueGamesMap.size());
-        }
-        return new ArrayList<>(uniqueGamesMap.values());
     }
 
 }

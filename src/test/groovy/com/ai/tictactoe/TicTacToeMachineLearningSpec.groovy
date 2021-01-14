@@ -1,16 +1,19 @@
 package com.ai.tictactoe
 
+import com.ai.tictactoe.game.AnnTicTacToeAgent
+import com.ai.tictactoe.game.BoardStatus
 import com.ai.tictactoe.game.GameResult
 import com.ai.tictactoe.game.MinMaxTicTacToeAgent
 import com.ai.tictactoe.game.RandomTicTacToeAgent
 import com.ai.tictactoe.game.TicTacToeAgent
-import com.ai.tictactoe.model.neuralnetwork.general.Activation
+import com.ai.tictactoe.game.TicTacToeGame
 import com.ai.tictactoe.model.neuralnetwork.general.LossFunction
 import com.ai.tictactoe.model.neuralnetwork.general.NeuralNetwork
 import com.ai.tictactoe.model.neuralnetwork.general.NeuralNetworkFactory
 import com.ai.tictactoe.model.neuralnetwork.general.TransferFunction
-import com.ai.tictactoe.model.neuralnetwork.general.WeightInitializationType
+import com.ai.tictactoe.model.neuralnetwork.general.WeightInitType
 import com.ai.tictactoe.game.BoardCell
+import com.fasterxml.jackson.databind.ObjectMapper
 import spock.lang.Specification
 import java.util.stream.Collectors
 
@@ -27,7 +30,7 @@ class TicTacToeMachineLearningSpec extends Specification
      * This supervised learning procedure is using two players: MinMaxTicTacToeAgent paying against RandomTicTacToeAgent
      * @return file with "adjusted" neural network object
      */
-    def 'supervised learning using ANN having vector SOFTMAX output : train new tic-tac-toe network and serialize to file'()
+    def 'Dynamic supervised learning using ANN having vector SOFTMAX output : train new tic-tac-toe network and serialize to file'()
     {
         given:
             NeuralNetwork ann = nnf.build()
@@ -35,8 +38,9 @@ class TicTacToeMachineLearningSpec extends Specification
                     .hidden(27, "H1", 0.01d, TransferFunction.TANH)
                     .hidden(15, "H2", 0.01d, TransferFunction.TANH)
                     .output(9 , "O" , 0.01d, TransferFunction.SOFTMAX, LossFunction.CROSS_ENTROPY)
+                    //.output(9 , "O" , 0.01d, TransferFunction.TANH, LossFunction.MSE)
                     .learningRate(0.1d)
-                    .initialize(WeightInitializationType.XAVIER)
+                    .initialize(WeightInitType.XAVIER)
         and:
             int sampleNumber = 0
             MinMaxTicTacToeAgent minMaxAgent = new MinMaxTicTacToeAgent("x")
@@ -44,7 +48,7 @@ class TicTacToeMachineLearningSpec extends Specification
 
         when:
             int batchNo = 1
-            20.times {
+            10.times {
                 System.out.println("Batch #" + batchNo++)
                 playGamesAndTrain(emptyBoard(), ann, minMaxAgent, randomAgent, sampleNumber)
             }
@@ -72,7 +76,7 @@ class TicTacToeMachineLearningSpec extends Specification
     {
         List<BoardCell> targetMovesX = agentX.computeBestMoves(board, "x")
         List<Integer> input = AnnTicTacToeAgent.board2Inputs_18(board)
-        List<Double> targetOutput = cords2TargetOutput_9(targetMovesX)
+        List<Double> targetOutput = cords2TargetOutput_9multi(targetMovesX)
 
         // train the network
         ann.train(input, targetOutput, ++sample)
@@ -92,23 +96,73 @@ class TicTacToeMachineLearningSpec extends Specification
         }
     }
 
+
+    /**
+     * Machine learning based on game states stored in JSON file.
+     * @return
+     */
+    def 'File based supervised learning'()
+    {
+        given:
+                NeuralNetwork ann = nnf.build()
+                .input(27, "I")
+                .hidden(36, "H1", 0.01d, TransferFunction.TANH)
+                .hidden(18, "H2", 0.01d, TransferFunction.TANH)
+                .output(9 , "O" , 0.01d, TransferFunction.SOFTMAX, LossFunction.CROSS_ENTROPY)
+                .learningRate(0.1d)
+                .initialize(WeightInitType.XAVIER)
+        and:
+            ObjectMapper mapper = new ObjectMapper()
+            final File jsonGamesFile = new File("game-batch-rndX-vs-rndO-25947.json")
+            List<TicTacToeGame> gameList = mapper.readValue(jsonGamesFile, List<TicTacToeGame>.class)
+        and:
+            int dataSetNo = 1, sample = 0
+            int inputVectorSize = ann.getInputLayer().numberOfNeurons()
+
+        when:
+            5.times {
+                System.out.println("Batch #" + dataSetNo++)
+                for (TicTacToeGame g : gameList)
+                {
+                    if(g.whoWon == null || g.whoWon.equals("x")) // train network for draws and wins only
+                    {
+                        for(BoardStatus boardStatus : g.states)
+                        {
+                            if(boardStatus.nextMove != null)
+                            {
+                                List<Integer> input = AnnTicTacToeAgent.inputVectorFromBoard(boardStatus.board, inputVectorSize)
+                                List<Double> targetOutput = cords2TargetOutput_9(boardStatus.nextMove)
+                                // train the network
+                                ann.train(input, targetOutput, ++sample)
+                            }
+                        }
+                        System.out.println("Training for game executed: " + boardToString(g.board))
+                    }
+                }
+            }
+
+        then:  // save trained network to file
+            ann.serializeToFile()
+            true
+
+    }
+
     def 'Next predicted move should be different than the first one during a game'()
     {
         given:
-            AnnTicTacToeAgent ann =  new AnnTicTacToeAgent();
-            ann.init("net-18-27-15-9-20210114-1055.ann")
+            AnnTicTacToeAgent annTicTacToeAgent =  new AnnTicTacToeAgent("x");
+            annTicTacToeAgent.init("net-27-36-18-9-20210114-1609.ann")
         and:
-            RandomTicTacToeAgent randomAgent = new RandomTicTacToeAgent("x")
+            RandomTicTacToeAgent randomAgent = new RandomTicTacToeAgent("o")
             String[][] board = [["x", "o", " "], [" ", " ", " "], [" ", " ", " "]]
 
         when:
-            BoardCell moveX = ann.predictNextMove(board)
+            BoardCell moveX = annTicTacToeAgent.getNextMove(board)
             board[moveX.row][moveX.col] = "x"
         and:
-            BoardCell moveO = randomAgent.getNextMove(board)
-            board[moveO.row][moveO.col] = "o"
+            randomAgent.doMove(board)
         then:
-            moveX != ann.predictNextMove(board)
+            moveX != annTicTacToeAgent.predictNextMove(board)
     }
 
 
@@ -125,7 +179,7 @@ class TicTacToeMachineLearningSpec extends Specification
                     .hidden(9, "H2", 0.01d, TransferFunction.TANH)
                     .output(1 , "O" , 0.01d, TransferFunction.RELU, LossFunction.MSE)
                     .learningRate(0.1d)
-                    .initialize(WeightInitializationType.XAVIER)
+                    .initialize(WeightInitType.XAVIER)
         and:
             int sampleNumber = 0
             MinMaxTicTacToeAgent minMaxAgent = new MinMaxTicTacToeAgent("x")
@@ -170,7 +224,7 @@ class TicTacToeMachineLearningSpec extends Specification
                     .hidden(12, "H2", 0.1d, TransferFunction.TANH)
                     .output(9 , "O" , 0.1d, TransferFunction.SIGMOID,  LossFunction.MSE)
                     .learningRate(0.1d)
-                    .initialize(WeightInitializationType.XAVIER)
+                    .initialize(WeightInitType.XAVIER)
         and:
             MinMaxTicTacToeAgent playerX = new MinMaxTicTacToeAgent("x")
             RandomTicTacToeAgent randomAgent = new RandomTicTacToeAgent("o")
@@ -189,7 +243,7 @@ class TicTacToeMachineLearningSpec extends Specification
                     if (targetMovesX.size() > 0)
                     {
                         List<Integer> input = AnnTicTacToeAgent.board2Inputs_18(board)
-                        List<Double> targetOutput = cords2TargetOutput_9(targetMovesX)
+                        List<Double> targetOutput = cords2TargetOutput_9multi(targetMovesX)
 
                         // train network only for newly experienced game states
                        // final String gameStateKey = randomAgent.getBoardKey(board)
@@ -260,7 +314,7 @@ class TicTacToeMachineLearningSpec extends Specification
     }
 
 
-    List<Double> cords2TargetOutput_9(final List<BoardCell> targetMoves)
+    List<Double> cords2TargetOutput_9multi(final List<BoardCell> targetMoves)
     {
         Map<String,Integer[]> bestMoves = targetMoves.stream().collect(Collectors.toMap(c -> c.row + "_" + c.col, c -> c ))
         List<Double> targetOutput = new ArrayList<>()
@@ -271,5 +325,17 @@ class TicTacToeMachineLearningSpec extends Specification
         }
         return targetOutput
     }
+
+    List<Double> cords2TargetOutput_9(final BoardCell targetMove)
+    {
+        List<Double> targetOutput = new ArrayList<>()
+        for(int row=0; row< 3; row++) {
+            for(int col=0; col< 3; col++) {
+                targetOutput.add((targetMove.row == row && targetMove.col == col) ? 1.0d : 0.0d)
+            }
+        }
+        return targetOutput
+    }
+
 
 }

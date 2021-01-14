@@ -61,46 +61,4 @@ class MinMaxTicTacToeAgentSpec extends Specification
              ["o","o","x"],
              ["x"," ","o"]] | null // game is over: "o" has won
     }
-
-
-
-
-    def "generateGames"()
-    {
-        given:
-            MinMaxTicTacToeAgent minMaxEngine01 = new MinMaxTicTacToeAgent("x");
-            MinMaxTicTacToeAgent minMaxEngine02 = new MinMaxTicTacToeAgent("o");
-
-        when:
-            for(int r=0; r<3; r++)
-            {
-                for(int c=0; c<3; c++)
-                {
-                    String[][] board = [[" "," "," "],[" "," "," "], [" "," "," "]]
-                    board[r][c] = "o"
-                    while(true)
-                    {
-                        BoardCell move = minMaxEngine01.getNextMove(board, )
-                        if (move != null) {
-                            board[move.row][move.col] = "x"
-                            move = minMaxEngine02.getNextMove(board, )
-                        }
-                        if (move != null) {
-                            board[move.row][move.col] = "o"
-                        }
-                        if(move == null )
-                        {
-                            //game is complete - save the board....
-                            board;
-                            break;
-                        }
-                    }
-
-                }
-            }
-
-        then:
-            true
-    }
-
 }
