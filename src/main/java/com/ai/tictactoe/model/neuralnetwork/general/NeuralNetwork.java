@@ -159,15 +159,15 @@ public class NeuralNetwork implements Serializable
      * @param noOfNeurons
      * @param name
      * @param initialWeight
-     * @param activationFunc
+     * @param transferFunc
      * @return
      */
     public NeuralNetwork hidden(final int noOfNeurons,
                                 final String name,
                                 final Double initialWeight,
-                                ActivationFunction activationFunc)
+                                TransferFunction transferFunc)
     {
-        layer(new Layer(noOfNeurons, name, initialWeight, activationFunc));
+        layer(new Layer(noOfNeurons, name, initialWeight, transferFunc));
         return this;
     }
 
@@ -176,17 +176,17 @@ public class NeuralNetwork implements Serializable
      * @param noOfNeurons
      * @param name
      * @param initialWeight
-     * @param activationFunc
+     * @param transferFunc
      * @param lossFunc
      * @return
      */
     public NeuralNetwork output(final int noOfNeurons,
                                 final String name,
                                 final Double initialWeight,
-                                ActivationFunction activationFunc,
+                                TransferFunction transferFunc,
                                 LossFunction lossFunc)
     {
-        layer(new OutputLayer(noOfNeurons, name, initialWeight, activationFunc, lossFunc));
+        layer(new OutputLayer(noOfNeurons, name, initialWeight, transferFunc, lossFunc));
         return this;
     }
 
@@ -431,14 +431,23 @@ public class NeuralNetwork implements Serializable
             {
                 Neuron nA = neuronListA.get(i);
                 Neuron nB = neuronList.get(i);
-
                 List<DefaultWeightedEdge> inputEdgesA = nA.getInputEdges(netA.net);
-                List<DefaultWeightedEdge> inputEdges = nB.getInputEdges(this.net);
+                List<DefaultWeightedEdge> inputEdgesB = nB.getInputEdges(this.net);
+                if(inputEdgesA.size() != inputEdgesB.size())
+                {
+                    return false;
+                }
                 for(int e=0; e < inputEdgesA.size(); e++)
                 {
-                    if(netA.net.getEdgeWeight(inputEdgesA.get(e)) != this.net.getEdgeWeight(inputEdges.get(e))) {
+                    if(netA.net.getEdgeWeight(inputEdgesA.get(e)) != this.net.getEdgeWeight(inputEdgesB.get(e))) {
                         return false;
                     }
+                }
+                List<DefaultWeightedEdge> outputEdgesA = nA.getOutputEdges(netA.net);
+                List<DefaultWeightedEdge> outputEdgesB = nB.getOutputEdges(this.net);
+                if(outputEdgesA.size() != outputEdgesB.size())
+                {
+                    return false;
                 }
             }
         }

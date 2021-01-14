@@ -13,10 +13,10 @@ public class OutputLayer extends Layer
     public OutputLayer(final int noOfNeurons,
                        final String name,
                        final Double initialWeight,
-                       ActivationFunction function,
+                       TransferFunction transferFunc,
                        LossFunction lossFunction)
     {
-        super(noOfNeurons, name, initialWeight, function);
+        super(noOfNeurons, name, initialWeight, transferFunc);
         this.lossFunction = lossFunction;
     }
 

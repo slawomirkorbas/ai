@@ -7,13 +7,13 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import spock.lang.Specification
 import spock.lang.Unroll
 
-class TicTacToeEngineSpec extends Specification {
+class AnnTicTacToeAgentSpec extends Specification {
 
     @Unroll
     def "generateGames: plays MinMax vs Random and store games in JSON format"() throws IOException
     {
         given:
-            TicTacToeEngine engine = new TicTacToeEngine()
+            AnnTicTacToeAgent engine = new AnnTicTacToeAgent()
             ObjectMapper mapper = new ObjectMapper()
 
         when:

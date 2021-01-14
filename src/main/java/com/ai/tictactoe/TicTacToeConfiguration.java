@@ -23,9 +23,9 @@ public class TicTacToeConfiguration implements WebMvcConfigurer
     private ApplicationContext applicationContext;
 
     @Bean
-    TicTacToeEngine ticTacToeNetwork()
+    AnnTicTacToeAgent ticTacToeNetwork()
     {
-        TicTacToeEngine ann =  new TicTacToeEngine();
+        AnnTicTacToeAgent ann =  new AnnTicTacToeAgent();
         ann.init("net-18-12-9-20210112-1612.ann");
         return ann;
     }

@@ -24,7 +24,7 @@ public class Layer implements Serializable
     Double initialWeight;
 
     /** The activation function used by the neuron within the layer **/
-    ActivationFunction activationFunction;
+    TransferFunction transferFunction;
 
 
     /**
@@ -36,16 +36,16 @@ public class Layer implements Serializable
     public Layer(final int noOfNeurons,
                  final String name,
                  final Double initialWeight,
-                 ActivationFunction function)
+                 TransferFunction function)
     {
         this.name = name;
         this.initialWeight = initialWeight;
-        this.activationFunction = function;
+        this.transferFunction = function;
         this.neuronList = new ArrayList<>();
         for(int neuronIndex = 0; neuronIndex < noOfNeurons; neuronIndex++)
         {
             // add new neuron
-            neuronList.add(new Neuron( name + "_" + neuronIndex, activationFunction));
+            neuronList.add(new Neuron(name + "_" + neuronIndex, transferFunction));
         }
     }
 
@@ -116,7 +116,7 @@ public class Layer implements Serializable
      */
     public void forwardPass(final SimpleDirectedWeightedGraph<Neuron, DefaultWeightedEdge> net)
     {
-        if(activationFunction == Activation.SOFTMAX)
+        if(transferFunction.equals(TransferFunction.SOFTMAX))
         {
             neuronList.stream().forEach(n -> n.calcNetValue(net));
             List<Double> netValuesVector = neuronList.stream().map(n -> n.netVal).collect(Collectors.toList());
@@ -148,8 +148,8 @@ public class Layer implements Serializable
         // Compare layer properties
         final Layer layer = (Layer)o;
         if( !layer.name.equals(this.name)) return false;
-        if(layer.activationFunction != null &&
-            this.activationFunction == null) return false;
+        if(layer.transferFunction != null &&
+            this.transferFunction == null) return false;
         if( layer.numberOfNeurons() != this.numberOfNeurons()) return false;
 
         //Compare neurons...

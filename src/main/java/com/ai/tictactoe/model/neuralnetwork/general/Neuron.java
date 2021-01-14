@@ -30,7 +30,7 @@ public class Neuron implements Serializable
     String name;
 
     /** Activation function to apply on Net value eg. hyperbolic like SIGMOID or TANH **/
-    ActivationFunction activationFunction;
+    TransferFunction transferFunction;
 
     /** Value of the neuron based on the aggregated sum of inputs multiplied by their weights **/
     Double netVal;
@@ -45,10 +45,10 @@ public class Neuron implements Serializable
      * Default constructor
      * @param name - name of the neuron
      */
-    public Neuron(final String name, ActivationFunction activationFunction)
+    public Neuron(final String name, TransferFunction transferFunction)
     {
         this.name = name;
-        this.activationFunction = activationFunction;
+        this.transferFunction = transferFunction;
     }
 
     @Override
@@ -118,9 +118,9 @@ public class Neuron implements Serializable
      */
     public Double activate()
     {
-        if(activationFunction != null)
+        if(transferFunction != null)
         {
-            outputValue = activationFunction.apply(netVal);
+            outputValue = Activation.activations.get(transferFunction).apply(netVal);
         }
         return outputValue;
     }
@@ -149,7 +149,7 @@ public class Neuron implements Serializable
      */
     public Double calculateErrorDeltaNet(Double d_E_out)
     {
-        Double d_out_net = Activation.derivatives.get(activationFunction).apply(outputValue);
+        Double d_out_net = Activation.derivatives.get(transferFunction).apply(outputValue);
         errorDeltaNet = d_out_net * d_E_out;
         return d_out_net;
     }

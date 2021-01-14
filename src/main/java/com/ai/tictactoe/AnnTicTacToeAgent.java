@@ -16,7 +16,7 @@ import java.util.Map;
  * Wrapper class for neural network trained to play Tic-Tac-Toe game.
  *
  */
-public class TicTacToeEngine
+public class AnnTicTacToeAgent
 {
     /** Neural network object **/
     NeuralNetwork ann;
@@ -50,7 +50,7 @@ public class TicTacToeEngine
     /**
      * Default constructor
      */
-    public TicTacToeEngine()
+    public AnnTicTacToeAgent()
     {
 
     }
@@ -74,7 +74,7 @@ public class TicTacToeEngine
         final List<Integer> inputs = inputVectorFromBoard(board);
         final List<Double> outputVector = ann.predict(inputs);
 
-        if( ann.isSingleOutput())
+        if(ann.isSingleOutput())
         {
             Integer cellIndex = (int)Math.round(outputVector.get(0));
             if(cellIndex < 0 || cellIndex > 8)

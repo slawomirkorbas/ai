@@ -13,7 +13,7 @@ class NeuralNetworkSpec extends Specification
         when:
             NeuralNetwork net = nnf.build()
                .input(27,  "P", null, null)
-               .output(9, "H", 0.01d, Activation.TANH)
+               .output(9, "H", 0.01d, TransferFunction.TANH)
                .learningRate(0.01d)
                .initialize(WeightInitializationType.DEFAULT)
 
@@ -27,7 +27,7 @@ class NeuralNetworkSpec extends Specification
         given:
             NeuralNetwork net = nnf.build()
                .input(4, "P")
-               .output(2, "H", 0.01d, Activation.TANH,  LossFunction.MSE)
+               .output(2, "H", 0.01d, TransferFunction.TANH,  LossFunction.MSE)
                .learningRate(0.01d)
                .initialize(WeightInitializationType.DEFAULT)
 
@@ -43,8 +43,8 @@ class NeuralNetworkSpec extends Specification
         given:
             NeuralNetwork net = nnf.build()
                .input(5, "I")
-               .hidden(3, "H", 0.01d, Activation.SIGMOID)
-               .output(2, "O", 0.01d, Activation.TANH, LossFunction.MSE)
+               .hidden(3, "H", 0.01d, TransferFunction.SIGMOID)
+               .output(2, "O", 0.01d, TransferFunction.TANH, LossFunction.MSE)
                .learningRate(0.01d)
                .initialize(WeightInitializationType.DEFAULT)
         and:
@@ -94,9 +94,9 @@ class NeuralNetworkSpec extends Specification
             }
 
         where:
-            activationFunction | inputs      | targets
-            Activation.SIGMOID | [ 1, 0, 1 ] | [ 1.0d, 0.0d ]
-            Activation.TANH    | [ 1, 0, 1 ] | [ 1.0d, 0.0d ]
+            activationFunction       | inputs      | targets
+            TransferFunction.SIGMOID | [ 1, 0, 1 ] | [ 1.0d, 0.0d ]
+            TransferFunction.TANH    | [ 1, 0, 1 ] | [ 1.0d, 0.0d ]
     }
 
 
@@ -105,9 +105,9 @@ class NeuralNetworkSpec extends Specification
         given:
             NeuralNetwork net = nnf.build()
                 .input(2, "I")
-                .hidden(3, "H1", 0.2d, Activation.TANH)
-                .hidden(3, "H2", 0.1d, Activation.TANH)
-                .output(1, "O", 0.05d, Activation.RELU,  LossFunction.MSE)
+                .hidden(3, "H1", 0.2d, TransferFunction.TANH)
+                .hidden(3, "H2", 0.1d, TransferFunction.TANH)
+                .output(1, "O", 0.05d, TransferFunction.RELU,  LossFunction.MSE)
                 .learningRate(0.2d)
                 .initialize(WeightInitializationType.XAVIER)
 
@@ -137,9 +137,9 @@ class NeuralNetworkSpec extends Specification
         given:
             NeuralNetwork net = nnf.build()
                 .input(2, "I")
-                .hidden(4, "H1", 0.3d, Activation.TANH)
-                .hidden(3, "H2", 0.2d, Activation.TANH)
-                .output(1, "O", 0.1d, Activation.TANH, LossFunction.MSE)
+                .hidden(4, "H1", 0.3d, TransferFunction.TANH)
+                .hidden(3, "H2", 0.2d, TransferFunction.TANH)
+                .output(1, "O", 0.1d, TransferFunction.TANH, LossFunction.MSE)
                 .learningRate(0.5d)
                 .initialize(WeightInitializationType.DEFAULT)
 
@@ -169,9 +169,9 @@ class NeuralNetworkSpec extends Specification
         given:
             NeuralNetwork net = nnf.build()
                .input(3, "I")
-               .hidden(5, "H1", 0.3d, Activation.TANH)
-               .hidden(3, "H2", 0.2d, Activation.TANH)
-               .output(2, "O" , 0.1d, Activation.SOFTMAX, LossFunction.CROSS_ENTROPY)
+               .hidden(5, "H1", 0.3d, TransferFunction.TANH)
+               .hidden(3, "H2", 0.2d, TransferFunction.TANH)
+               .output(2, "O" , 0.1d, TransferFunction.SOFTMAX, LossFunction.CROSS_ENTROPY)
                .learningRate(0.5d)
                .initialize(WeightInitializationType.XAVIER)
 
@@ -205,7 +205,7 @@ class NeuralNetworkSpec extends Specification
         given:
             NeuralNetwork ann = nnf.build()
                 .input(4, "I")
-                .output(3, "O" , 100d, Activation.SOFTMAX, LossFunction.CROSS_ENTROPY)
+                .output(3, "O" , 100d, TransferFunction.SOFTMAX, LossFunction.CROSS_ENTROPY)
                 .learningRate(0.5d)
                 .initialize(WeightInitializationType.DEFAULT)
         and:
@@ -231,8 +231,8 @@ class NeuralNetworkSpec extends Specification
         given:
             NeuralNetwork ann = nnf.build()
                .input(5, "I")
-               .hidden(3, "H", 0.2d, Activation.SIGMOID)
-               .output(1, "O", 1.0d, Activation.TANH, LossFunction.MSE)
+               .hidden(3, "H", 0.2d, TransferFunction.SIGMOID)
+               .output(1, "O", 1.0d, TransferFunction.TANH, LossFunction.MSE)
                .learningRate(0.2d)
                .initialize(WeightInitializationType.DEFAULT)
         and:

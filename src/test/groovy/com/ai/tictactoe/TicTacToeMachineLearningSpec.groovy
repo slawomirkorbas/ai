@@ -8,6 +8,7 @@ import com.ai.tictactoe.model.neuralnetwork.general.Activation
 import com.ai.tictactoe.model.neuralnetwork.general.LossFunction
 import com.ai.tictactoe.model.neuralnetwork.general.NeuralNetwork
 import com.ai.tictactoe.model.neuralnetwork.general.NeuralNetworkFactory
+import com.ai.tictactoe.model.neuralnetwork.general.TransferFunction
 import com.ai.tictactoe.model.neuralnetwork.general.WeightInitializationType
 import com.ai.tictactoe.game.BoardCell
 import spock.lang.Specification
@@ -31,9 +32,9 @@ class TicTacToeMachineLearningSpec extends Specification
         given:
             NeuralNetwork ann = nnf.build()
                     .input(18, "I")
-                    .hidden(27, "H1", 0.01d, Activation.TANH)
-                    .hidden(15, "H2", 0.01d, Activation.TANH)
-                    .output(9 , "O" , 0.01d, Activation.SOFTMAX, LossFunction.CROSS_ENTROPY)
+                    .hidden(27, "H1", 0.01d, TransferFunction.TANH)
+                    .hidden(15, "H2", 0.01d, TransferFunction.TANH)
+                    .output(9 , "O" , 0.01d, TransferFunction.SOFTMAX, LossFunction.CROSS_ENTROPY)
                     .learningRate(0.1d)
                     .initialize(WeightInitializationType.XAVIER)
         and:
@@ -51,7 +52,7 @@ class TicTacToeMachineLearningSpec extends Specification
         then:
             // smoke test for SOFTMAX results
             String[][] board = [["x", "o", " "], [" ", " ", " "], [" ", " ", " "]]
-            List<Double> output = ann.predict(TicTacToeEngine.board2Inputs_18(board))
+            List<Double> output = ann.predict(AnnTicTacToeAgent.board2Inputs_18(board))
             output.forEach( v -> {
                 System.out.print(v + ", ")
                 v >= 0.0d && v <= 1.0d // all values should be between 0 and 1
@@ -70,7 +71,7 @@ class TicTacToeMachineLearningSpec extends Specification
                                 MinMaxTicTacToeAgent agentX, TicTacToeAgent agentO, int sample)
     {
         List<BoardCell> targetMovesX = agentX.computeBestMoves(board, "x")
-        List<Integer> input = TicTacToeEngine.board2Inputs_18(board)
+        List<Integer> input = AnnTicTacToeAgent.board2Inputs_18(board)
         List<Double> targetOutput = cords2TargetOutput_9(targetMovesX)
 
         // train the network
@@ -91,6 +92,25 @@ class TicTacToeMachineLearningSpec extends Specification
         }
     }
 
+    def 'Next predicted move should be different than the first one during a game'()
+    {
+        given:
+            AnnTicTacToeAgent ann =  new AnnTicTacToeAgent();
+            ann.init("net-18-27-15-9-20210114-1055.ann")
+        and:
+            RandomTicTacToeAgent randomAgent = new RandomTicTacToeAgent("x")
+            String[][] board = [["x", "o", " "], [" ", " ", " "], [" ", " ", " "]]
+
+        when:
+            BoardCell moveX = ann.predictNextMove(board)
+            board[moveX.row][moveX.col] = "x"
+        and:
+            BoardCell moveO = randomAgent.getNextMove(board)
+            board[moveO.row][moveO.col] = "o"
+        then:
+            moveX != ann.predictNextMove(board)
+    }
+
 
     /**
      * This supervised learning procedure is using two players: MinMaxTicTacToeAgent paying against RandomTicTacToeAgent
@@ -101,9 +121,9 @@ class TicTacToeMachineLearningSpec extends Specification
         given:
             NeuralNetwork ann = nnf.build()
                     .input(18, "I", )
-                    .hidden(12, "H1", 0.01d, Activation.TANH)
-                    .hidden(9, "H2", 0.01d, Activation.TANH)
-                    .output(1 , "O" , 0.01d, Activation.RELU, LossFunction.MSE)
+                    .hidden(12, "H1", 0.01d, TransferFunction.TANH)
+                    .hidden(9, "H2", 0.01d, TransferFunction.TANH)
+                    .output(1 , "O" , 0.01d, TransferFunction.RELU, LossFunction.MSE)
                     .learningRate(0.1d)
                     .initialize(WeightInitializationType.XAVIER)
         and:
@@ -116,12 +136,12 @@ class TicTacToeMachineLearningSpec extends Specification
                 String[][] board = [[" ", " ", " "], [" ", " ", " "], [" ", " ", " "]]
                 while(true) {
                     BoardCell targetMoveX = minMaxAgent.getFirstNextMove(board)
-                    List<Integer> input = TicTacToeEngine.board2Inputs_9(board)
+                    List<Integer> input = AnnTicTacToeAgent.board2Inputs_9(board)
                     if (targetMoveX == null) { // game finished
                         //ann.train(input, [Double.valueOf(-1)], ++sampleNumber)
                         break
                     }
-                    Integer targetCellIndex = TicTacToeEngine.rowCol2CellIndexMap.get(targetMoveX.row + "_" + targetMoveX.col)
+                    Integer targetCellIndex = AnnTicTacToeAgent.rowCol2CellIndexMap.get(targetMoveX.row + "_" + targetMoveX.col)
                     ann.train(input, [Double.valueOf(targetCellIndex)], ++sampleNumber)
                     board[targetMoveX.row][targetMoveX.col] = "x"
 
@@ -146,9 +166,9 @@ class TicTacToeMachineLearningSpec extends Specification
         given:
             NeuralNetwork ann = nnf.build()
                     .input(18, "I" , null, null)
-                    .hidden(15, "H1", 0.1d, Activation.TANH)
-                    .hidden(12, "H2", 0.1d, Activation.TANH)
-                    .output(9 , "O" , 0.1d, Activation.SIGMOID,  LossFunction.MSE)
+                    .hidden(15, "H1", 0.1d, TransferFunction.TANH)
+                    .hidden(12, "H2", 0.1d, TransferFunction.TANH)
+                    .output(9 , "O" , 0.1d, TransferFunction.SIGMOID,  LossFunction.MSE)
                     .learningRate(0.1d)
                     .initialize(WeightInitializationType.XAVIER)
         and:
@@ -168,7 +188,7 @@ class TicTacToeMachineLearningSpec extends Specification
                     List<BoardCell> targetMovesX = playerX.computeBestMoves(board, "x")
                     if (targetMovesX.size() > 0)
                     {
-                        List<Integer> input = TicTacToeEngine.board2Inputs_18(board)
+                        List<Integer> input = AnnTicTacToeAgent.board2Inputs_18(board)
                         List<Double> targetOutput = cords2TargetOutput_9(targetMovesX)
 
                         // train network only for newly experienced game states
@@ -212,28 +232,6 @@ class TicTacToeMachineLearningSpec extends Specification
             //ann.visualize()
             true
 
-    }
-
-
-    def 'Next predicted move should be different than the first one during a game'()
-    {
-        given:
-            TicTacToeEngine ann =  new TicTacToeEngine();
-            ann.init("net-18-27-15-9-20210113-1459.ann")
-            //ann.init("net-18-12-9-20210112-1535.ann")
-            //ann.init("neural-network-20210107-1527.ann")
-        and:
-            RandomTicTacToeAgent randomAgent = new RandomTicTacToeAgent("x")
-            String[][] board = [["x", "o", " "], [" ", " ", " "], [" ", " ", " "]]
-
-        when:
-            BoardCell moveX = ann.predictNextMove(board)
-            board[moveX.row][moveX.col] = "x"
-        and:
-            BoardCell moveO = randomAgent.getNextMove(board)
-            board[moveO.row][moveO.col] = "o"
-        then:
-            moveX != ann.predictNextMove(board)
     }
 
 
