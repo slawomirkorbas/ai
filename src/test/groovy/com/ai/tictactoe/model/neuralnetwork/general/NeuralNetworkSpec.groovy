@@ -12,14 +12,14 @@ class NeuralNetworkSpec extends Specification
     {
         when:
             NeuralNetwork net = nnf.build()
-               .input(27,  "P", null, null)
-               .output(9, "H", 0.01d, TransferFunction.TANH)
+               .input(27,  "P")
+               .output(9, "H", 0.01d, TransferFunction.TANH,  LossFunction.MSE)
                .learningRate(0.01d)
                .initialize(WeightInitType.DEFAULT)
 
         then:
             net.getLayers().get(0).numberOfNeurons() == 27
-            net.getLayers().get(0).numberOfNeurons() == 9
+            net.getLayers().get(1).numberOfNeurons() == 9
     }
 
     def "visualize: creates PNG file with neural network graph"()

@@ -172,20 +172,6 @@ public class Neuron implements Serializable
         return outputValue;
     }
 
-    /**
-     *
-     * @return
-     */
-    public Double calculateErrorDeltaNet()
-    {
-        errorDeltaNet = 0.00;
-        if(transferFunction != null)
-        {
-            Double d_out_net = Activation.derivatives.get(transferFunction).apply(outputValue);
-            errorDeltaNet = d_out_net * this.d_E_total_out;
-        }
-        return errorDeltaNet;
-    }
 
     /**
      * Map of average gradients (Total error delta with respect specific input weight).

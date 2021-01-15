@@ -106,14 +106,14 @@ class TicTacToeMachineLearningSpec extends Specification
         given:
                 NeuralNetwork ann = nnf.build()
                 .input(18, "I")
-                .hidden(15, "H1", 0.01d, TransferFunction.TANH)
-                .hidden(12, "H2", 0.01d, TransferFunction.TANH)
+                .hidden(27, "H1", 0.01d, TransferFunction.TANH)
+                .hidden(18, "H2", 0.01d, TransferFunction.TANH)
                 .output(9 , "O" , 0.01d, TransferFunction.SOFTMAX, LossFunction.CROSS_ENTROPY)
                 .learningRate(0.2d)
                 .initialize(WeightInitType.XAVIER)
         and:
             ObjectMapper mapper = new ObjectMapper()
-            final File jsonGamesFile = new File("game-batch-rndX-vs-rndO-25947.json")
+            final File jsonGamesFile = new File("game-batch-mmX-vs-rndO-2424.json")
             List<TicTacToeGame> gameList = mapper.readValue(jsonGamesFile, List<TicTacToeGame>.class)
         and:
             int dataSetNo = 1, sample = 0
@@ -151,7 +151,7 @@ class TicTacToeMachineLearningSpec extends Specification
     {
         given:
             AnnTicTacToeAgent annTicTacToeAgent =  new AnnTicTacToeAgent("x");
-            annTicTacToeAgent.init("net-27-36-18-9-20210114-1609.ann")
+            annTicTacToeAgent.init("net-18-27-18-9-20210115-1945.ann")
         and:
             RandomTicTacToeAgent randomAgent = new RandomTicTacToeAgent("o")
             String[][] board = [["x", "o", " "], [" ", " ", " "], [" ", " ", " "]]
