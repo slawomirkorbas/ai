@@ -35,8 +35,8 @@ class TicTacToeMachineLearningSpec extends Specification
         given:
             NeuralNetwork ann = nnf.build()
                     .input(18, "I")
-                    .hidden(27, "H1", 0.01d, TransferFunction.TANH)
-                    .hidden(15, "H2", 0.01d, TransferFunction.TANH)
+                    .hidden(15, "H1", 0.01d, TransferFunction.TANH)
+                    .hidden(12, "H2", 0.01d, TransferFunction.TANH)
                     .output(9 , "O" , 0.01d, TransferFunction.SOFTMAX, LossFunction.CROSS_ENTROPY)
                     //.output(9 , "O" , 0.01d, TransferFunction.TANH, LossFunction.MSE)
                     .learningRate(0.1d)
@@ -105,11 +105,11 @@ class TicTacToeMachineLearningSpec extends Specification
     {
         given:
                 NeuralNetwork ann = nnf.build()
-                .input(27, "I")
-                .hidden(36, "H1", 0.01d, TransferFunction.TANH)
-                .hidden(18, "H2", 0.01d, TransferFunction.TANH)
+                .input(18, "I")
+                .hidden(15, "H1", 0.01d, TransferFunction.TANH)
+                .hidden(12, "H2", 0.01d, TransferFunction.TANH)
                 .output(9 , "O" , 0.01d, TransferFunction.SOFTMAX, LossFunction.CROSS_ENTROPY)
-                .learningRate(0.1d)
+                .learningRate(0.2d)
                 .initialize(WeightInitType.XAVIER)
         and:
             ObjectMapper mapper = new ObjectMapper()

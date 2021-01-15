@@ -116,11 +116,11 @@ public class NeuralNetwork implements Serializable
 
     /**
      * Returns an output layer
-     * @return Layer
+     * @return OutputLayer
      */
-    public Layer getOutputLayer()
+    public OutputLayer getOutputLayer()
     {
-        return layers.get(layers.size()-1);
+        return (OutputLayer)layers.get(layers.size()-1);
     }
 
     /**
@@ -150,7 +150,7 @@ public class NeuralNetwork implements Serializable
     public NeuralNetwork input(final int noOfNeurons,
                                 final String name)
     {
-        layer(new Layer(noOfNeurons, name, null, null));
+        layer(new InputLayer(noOfNeurons, name));
         return this;
     }
 
@@ -253,7 +253,7 @@ public class NeuralNetwork implements Serializable
     }
 
     /**
-     * Train neural network using supervised learning (example data targets).
+     * Train neural network (using example data targets).
      * Uses "back propagation" algorithm.
      *
      * @param inputs
@@ -270,48 +270,68 @@ public class NeuralNetwork implements Serializable
         // predict results for given inputs...
         predict(inputs);
 
-        // Back propagation: calculate derivative of the cost(error) function with respect to input weights of specific layer's neurons
-        for(int l = layers.size() - 1; l > 0; l-- )
+        // Back propagate total  error starting from output layer
+        final OutputLayer outputLayer = this.getOutputLayer();
+        LossFunction lossFunc = outputLayer.lossFunction;
+        for(int n=0; n < outputLayer.numberOfNeurons(); n++)
         {
-            final Layer currentLayer = layers.get(l);
-            for(int i = 0; i < currentLayer.numberOfNeurons(); i++)
-            {
-                final Neuron currentNeuron = currentLayer.get(i);
-                Double d_E_out = 0.0;
-                if(currentLayer.isOutputLayer())
-                {
-                    // Partial derivative of E (cost function value) with respect to Out (activation result(output))
-                    d_E_out = lossDerivatives.get(((OutputLayer)currentLayer).lossFunction).apply(targets.get(i), currentNeuron.outputValue);
-                }
-                else // Hidden layer
-                {
-                    // Partial derivatives of Output(activation function results) with respect to Net value of the neuron
-                    List<DefaultWeightedEdge> outputEdges = currentNeuron.getOutputEdges(net);
-                    for(DefaultWeightedEdge edge : outputEdges)
-                    {
-                        Double d_Ei_netoi = net.getEdgeTarget(edge).errorDeltaNet;
-                        Double d_Netoi_outhi = net.getEdgeWeight(edge);  // this is just "wi" (Weight) because: (wi*outhi + wj*outhj)' = wi
-                        Double d_Ei_outhi = d_Ei_netoi * d_Netoi_outhi;
-                        d_E_out += d_Ei_outhi;
-                    }
-                }
-                currentNeuron.calculateErrorDeltaNet(d_E_out);
-
-                // Partial derivative of Net with respect to specific input weight (i,j)
-                List<Neuron> predecessors = Graphs.predecessorListOf(net, currentNeuron);
-                //System.out.println("Updating weights: ");
-                for(int p = 0; p < predecessors.size(); p++)
-                {
-                    final Neuron predecessor = predecessors.get(p);
-                    //Apply chaining rule to calculate d_E_w
-                    Double d_net_w = predecessor.outputValue;
-                    Double d_Etotal_w = d_net_w * currentNeuron.errorDeltaNet;
-                    DefaultWeightedEdge edge = net.getEdge(predecessor, currentNeuron);
-                    net.setEdgeWeight(edge, net.getEdgeWeight(edge) - learningRate * d_Etotal_w);
-                    //System.out.println("w(" + predecessor.getName() + "->" + currentNeuron.getName() + ") updated: " + net.getEdgeWeight(edge));
-                }
-            }
+            Neuron outputNeuron = outputLayer.neuronList.get(n);
+            outputNeuron.d_E_total_out = lossDerivatives.get(lossFunc).apply(targets.get(n), outputNeuron.outputValue);
+            outputNeuron.calculateErrorDeltaNet();
         }
+        for(int n=0; n < outputLayer.numberOfNeurons(); n++)
+        {
+            Neuron outputNeuron = outputLayer.neuronList.get(n);
+            backPropagate(outputNeuron);
+        }
+    }
+
+    /**
+     *
+     * @param currentNeuron
+     */
+    private void backPropagate(Neuron currentNeuron)
+    {
+        List<Neuron> predecessors = Graphs.predecessorListOf(net, currentNeuron);
+        if(currentNeuron.isBias() || predecessors.isEmpty())
+        {
+            return; // skip bias neurons as they don't connect to any predecessors
+        }
+
+        // Updates input edges weights leading to this neuron
+        for(int p = 0; p < predecessors.size(); p++)
+        {
+            final Neuron predecessor = predecessors.get(p);
+            //Apply chaining rule to calculate d_E_w
+            Double d_net_w = predecessor.outputValue;
+            Double d_Etotal_w = d_net_w * currentNeuron.errorDeltaNet;
+            DefaultWeightedEdge edge = net.getEdge(predecessor, currentNeuron);
+            net.setEdgeWeight(edge, net.getEdgeWeight(edge) - learningRate * d_Etotal_w);
+        }
+
+        // iterate over predecessor neurons  and calculate total error delta with respect to their outputs
+        for(int p = 0; p < predecessors.size(); p++)
+        {
+            final Neuron predecessor = predecessors.get(p);
+            List<DefaultWeightedEdge> outputEdges = predecessor.getOutputEdges(net);
+            predecessor.d_E_total_out = 0.00;
+            for(DefaultWeightedEdge edge : outputEdges)
+            {
+                Double d_Ei_netoi = net.getEdgeTarget(edge).errorDeltaNet;
+                Double d_Netoi_outhi = net.getEdgeWeight(edge);  // this is just "wi" (Weight) because: (wi*outhi + wj*outhj)' = wi
+                Double d_Ei_outhi = d_Ei_netoi * d_Netoi_outhi;
+                predecessor.d_E_total_out += d_Ei_outhi;
+            }
+            predecessor.calculateErrorDeltaNet();
+        }
+
+        // iterate over predecessor neurons again and execute backpropagation
+        for(int p = 0; p < predecessors.size(); p++)
+        {
+            final Neuron predecessor = predecessors.get(p);
+            backPropagate(predecessor);
+        }
+
     }
 
     /**

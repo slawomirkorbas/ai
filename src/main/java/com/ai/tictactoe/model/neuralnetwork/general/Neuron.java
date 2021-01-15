@@ -41,9 +41,30 @@ public class Neuron implements Serializable
     /** Transient Value of calculated derivative of Error/netVal for this neuron - used during back propagation**/
     Double errorDeltaNet;
 
+    /** Derivative of total error with respect to output value of this neuron - transient value used during backprop **/
+    Double d_E_total_out;
+
+    /** Flag indicating whether this is a bias neuron with fixed value **/
+    boolean bias = false;
+
+    /** The layer to which this neuron belongs to **/
+    Layer parentLayer;
+
     /**
      * Default constructor
      * @param name - name of the neuron
+     */
+    public Neuron(final String name, TransferFunction transferFunction, Layer parent)
+    {
+        this.name = name;
+        this.transferFunction = transferFunction;
+        this.parentLayer = parent;
+    }
+
+    /**
+     * Optional constructor
+     * @param name
+     * @param transferFunction
      */
     public Neuron(final String name, TransferFunction transferFunction)
     {
@@ -65,6 +86,15 @@ public class Neuron implements Serializable
     public int hashCode()
     {
         return this.name.hashCode();
+    }
+
+    /**
+     * Returns true if neuron belongs to input layer
+     * @return
+     */
+    public boolean isInput()
+    {
+        return this.parentLayer.isInputLayer();
     }
 
     /**
@@ -144,14 +174,17 @@ public class Neuron implements Serializable
 
     /**
      *
-     * @param d_E_out
      * @return
      */
-    public Double calculateErrorDeltaNet(Double d_E_out)
+    public Double calculateErrorDeltaNet()
     {
-        Double d_out_net = Activation.derivatives.get(transferFunction).apply(outputValue);
-        errorDeltaNet = d_out_net * d_E_out;
-        return d_out_net;
+        errorDeltaNet = 0.00;
+        if(transferFunction != null)
+        {
+            Double d_out_net = Activation.derivatives.get(transferFunction).apply(outputValue);
+            errorDeltaNet = d_out_net * this.d_E_total_out;
+        }
+        return errorDeltaNet;
     }
 
     /**

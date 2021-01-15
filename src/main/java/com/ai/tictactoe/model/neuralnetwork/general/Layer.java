@@ -27,6 +27,9 @@ public class Layer implements Serializable
     TransferFunction transferFunction;
 
 
+    boolean outputLayer = false;
+    boolean inputLayer = false;
+
     /**
      * Default constructor
      * @param name
@@ -45,7 +48,7 @@ public class Layer implements Serializable
         for(int neuronIndex = 0; neuronIndex < noOfNeurons; neuronIndex++)
         {
             // add new neuron
-            neuronList.add(new Neuron(name + "_" + neuronIndex, transferFunction));
+            neuronList.add(new Neuron(name + "_" + neuronIndex, transferFunction, this));
         }
     }
 
@@ -78,8 +81,7 @@ public class Layer implements Serializable
      */
     public void addBias(final SimpleDirectedWeightedGraph<Neuron, DefaultWeightedEdge> net)
     {
-        Neuron bias = new Neuron("Bias_" + name + "_", null);
-        bias.setOutputValue(1.0);
+        Neuron bias = new BiasNeuron("Bias_" + name + "_", 1.0);
         net.addVertex(bias);
 
         //connect the "Bias" neuron to each neuron from this layer
@@ -163,8 +165,4 @@ public class Layer implements Serializable
         return true;
     }
 
-    boolean isOutputLayer()
-    {
-        return false;
-    }
 }

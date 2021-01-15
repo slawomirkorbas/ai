@@ -66,7 +66,7 @@ class NeuralNetworkSpec extends Specification
         given:
             NeuralNetwork net = nnf.build()
                 .input(3, "I")
-                .hidden(2, "H", 0.1d, activationFunction)
+                .output(2, "O", 0.1d, activationFunction, LossFunction.MSE)
                 .learningRate(0.2d)
                 .initialize(WeightInitType.DEFAULT)
         and:
