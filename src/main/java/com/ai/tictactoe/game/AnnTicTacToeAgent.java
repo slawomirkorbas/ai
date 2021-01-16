@@ -71,7 +71,7 @@ public class AnnTicTacToeAgent extends TicTacToeAgent
      */
     private BoardCell predictNextMove(final String[][] board)
     {
-        final List<Integer> inputs = inputVectorFromBoard(board, ann.getInputLayer().numberOfNeurons());
+        final List<Double> inputs = inputVectorFromBoard(board, ann.getInputLayer().numberOfNeurons());
         final List<Double> outputVector = ann.predict(inputs);
 
         if(ann.isSingleOutput())
@@ -107,9 +107,9 @@ public class AnnTicTacToeAgent extends TicTacToeAgent
      * @param board - game state board
      * @return list of input values
      */
-    public static List<Integer> inputVectorFromBoard(final String[][] board, int inputSize)
+    public static List<Double> inputVectorFromBoard(final String[][] board, int inputSize)
     {
-        final List<Integer> inputs;
+        final List<Double> inputs;
         switch(inputSize)
         {
             case 9:
@@ -136,20 +136,20 @@ public class AnnTicTacToeAgent extends TicTacToeAgent
      * @param board
      * @return
      */
-    public static List<Integer> board2Inputs_9(String[][] board)
+    public static List<Double> board2Inputs_9(String[][] board)
     {
         int idx = 0;
         String value = "";
-        final Integer[] boardInputs = new Integer[] {0,0,0,0,0,0,0,0,0};
+        final Double[] boardInputs = new Double[] {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
         for(int i=0; i<board.length; i++) {
             for(int j=0; j<board.length; j++) {
                 value = board[i][j].trim();
                 if(value.isEmpty())
-                    boardInputs[idx++] = 0;
+                    boardInputs[idx++] = 0.01;
                 else if( value.equals("x"))
-                    boardInputs[idx++] = 1;
+                    boardInputs[idx++] = 1.0;
                 else if(value.equals("o"))
-                    boardInputs[idx++] = -1;
+                    boardInputs[idx++] = -1.0;
             }
         }
         return Arrays.asList(boardInputs);
@@ -161,18 +161,18 @@ public class AnnTicTacToeAgent extends TicTacToeAgent
      * @return
      */
 
-    public static List<Integer> board2Inputs_18(String[][] board)
+    public static List<Double> board2Inputs_18(String[][] board)
     {
         int idx = 0;
-        final Integer[] boardInputs = new Integer[] {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+        final Double[] boardInputs = new Double[] {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
         for(int i=0; i<board.length; i++) {
             for(int j=0; j<board.length; j++) {
-                boardInputs[idx++] = board[i][j].equals("x") ? 1 : 0;
+                boardInputs[idx++] = board[i][j].equals("x") ? 1.0 : 0.0;
             }
         }
         for(int i=0; i<board.length; i++) {
             for(int j=0; j<board.length; j++) {
-                boardInputs[idx++] = board[i][j].equals("o") ? 1 : 0;
+                boardInputs[idx++] = board[i][j].equals("o") ? 1.0 : 0.0;
             }
         }
         return Arrays.asList(boardInputs);
@@ -186,23 +186,23 @@ public class AnnTicTacToeAgent extends TicTacToeAgent
      * @param board - 2D string array
      * @return list of inputs capable for making predictions by neural network
      */
-    public static List<Integer> board2Inputs_27(String[][] board)
+    public static List<Double> board2Inputs_27(String[][] board)
     {
         int idx = 0;
-        final Integer[] boardInputs = new Integer[] {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+        final Double[] boardInputs = new Double[] {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
         for(int i=0; i<board.length; i++) {
             for(int j=0; j<board.length; j++) {
-                boardInputs[idx++] = board[i][j].trim().isEmpty() ? 1 : 0;
+                boardInputs[idx++] = board[i][j].trim().isEmpty() ? 1.0 : 0.0;
             }
         }
         for(int i=0; i<board.length; i++) {
             for(int j=0; j<board.length; j++) {
-                boardInputs[idx++] = board[i][j].equals("x") ? 1 : 0;
+                boardInputs[idx++] = board[i][j].equals("x") ? 1.0 : 0.0;
             }
         }
         for(int i=0; i<board.length; i++) {
             for(int j=0; j<board.length; j++) {
-                boardInputs[idx++] = board[i][j].equals("o") ? 1 : 0;
+                boardInputs[idx++] = board[i][j].equals("o") ? 1.0 : 0.0;
             }
         }
         return Arrays.asList(boardInputs);

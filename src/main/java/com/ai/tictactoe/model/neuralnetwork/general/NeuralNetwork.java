@@ -238,7 +238,7 @@ public class NeuralNetwork implements Serializable
      * @param inputValues - input values to feed neurons from the input layer
      * @return list of values from output neurons
      */
-    public List<Double> predict(final List<Integer> inputValues)
+    public List<Double> predict(final List<Double> inputValues)
     {
         if(layers.size() == 0)
         {
@@ -248,7 +248,7 @@ public class NeuralNetwork implements Serializable
         Layer inputLayer = layers.get(0);
         for(int i = 0; i < inputLayer.numberOfNeurons(); i++)
         {
-            inputLayer.get(i).setOutputValue(Double.valueOf(inputValues.get(i)));
+            inputLayer.get(i).setOutputValue(inputValues.get(i));
         }
 
         // calculate net value and activate each neuron inside every hidden layer
@@ -269,7 +269,7 @@ public class NeuralNetwork implements Serializable
      * @param targets
      * @param sampleNumber
      */
-    public void train(final List<Integer> inputs,  final List<Double> targets, int sampleNumber)
+    public void train(final List<Double> inputs,  final List<Double> targets, int sampleNumber)
     {
         if(layers.size() < 2 || inputs.isEmpty() || targets.isEmpty())
         {
@@ -372,7 +372,7 @@ public class NeuralNetwork implements Serializable
      * Save Neural Network data to file
      * @return file name
      */
-    public String serializeToFile()
+    public String serializeToFile(String epochSize)
     {
         try
         {
@@ -382,7 +382,7 @@ public class NeuralNetwork implements Serializable
                 fileName += "-" + l.getNeuronList().size();
             }
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmm");
-            fileName += "-" + formatter.format(LocalDateTime.now()) + ".ann";
+            fileName += "-" + formatter.format(LocalDateTime.now()) + "-epochs-" + epochSize + ".ann";
             ByteArrayOutputStream stream = serialize();
             FileOutputStream fileOutputStream = new FileOutputStream(fileName);
             fileOutputStream.write(stream.toByteArray());

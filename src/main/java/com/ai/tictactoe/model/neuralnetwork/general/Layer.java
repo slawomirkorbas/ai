@@ -9,7 +9,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Class representing specific layer of neurons within the Neural network
+ * Class representing specific dense layer of neurons within the Neural network.
+ * The dense layer is the type of layer where each neuron connects to each neuron from adjecent layers.
+ * This is most commonly used type of layer in deep neural networks.
  */
 @Data
 public class Layer implements Serializable

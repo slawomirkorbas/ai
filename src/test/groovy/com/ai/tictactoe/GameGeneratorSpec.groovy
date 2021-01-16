@@ -19,7 +19,7 @@ class GameGeneratorSpec extends Specification
             GameGenerator generator = new GameGenerator()
 
         when:
-            List<TicTacToeGame> totalGames = generator.generateGames(playerX, playerO, 50000)
+            List<TicTacToeGame> totalGames = generator.generateGames(playerX, playerO, 100000)
         then:
             totalGames.size() > 0
         and:

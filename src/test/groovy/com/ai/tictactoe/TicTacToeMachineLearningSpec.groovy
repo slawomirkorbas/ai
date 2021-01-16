@@ -45,10 +45,12 @@ class TicTacToeMachineLearningSpec extends Specification
             int sampleNumber = 0
             MinMaxTicTacToeAgent minMaxAgent = new MinMaxTicTacToeAgent("x")
             RandomTicTacToeAgent randomAgent = new RandomTicTacToeAgent("o")
+        and:
+            Integer epochSize = 10
 
         when:
             int batchNo = 1
-            10.times {
+            epochSize.times {
                 System.out.println("Batch #" + batchNo++)
                 playGamesAndTrain(emptyBoard(), ann, minMaxAgent, randomAgent, sampleNumber)
             }
@@ -62,7 +64,7 @@ class TicTacToeMachineLearningSpec extends Specification
                 v >= 0.0d && v <= 1.0d // all values should be between 0 and 1
             })
         and:
-            ann.serializeToFile()
+            ann.serializeToFile(epochSize)
             true
     }
 
@@ -114,36 +116,36 @@ class TicTacToeMachineLearningSpec extends Specification
 
         and:
             ObjectMapper mapper = new ObjectMapper()
-            final File jsonGamesFile = new File("game-batch-rndX-vs-rndO-25947.json")
+            final File jsonGamesFile = new File("game-batch-rndX-vs-rndO-32887.json")
             List<TicTacToeGame> gameList = mapper.readValue(jsonGamesFile, List<TicTacToeGame>.class)
         and:
-            int dataSetNo = 1, sample = 0
+            int dataSetNo = 1, gameNo = 0, sample = 0
             int inputVectorSize = ann.getInputLayer().numberOfNeurons()
+            Integer epochSize = 100 // number of training iterations
 
         when:
-            20.times {
+            epochSize.times {
                 System.out.println("Batch #" + dataSetNo++)
                 for (TicTacToeGame g : gameList)
                 {
-                    String effectiveFigure =  g.whoWon == null ? "x" : g.whoWon;
+                    String effectiveFigure = g.whoWon == null ? "x" : g.whoWon
                     for(GameState gameState : g.states)
                     {
                         // teach the network only for the effective moves leading to draws or wins
                         if(gameState.nextMove != null && gameState.nextMove.figure.equals(effectiveFigure))
                         {
-                            List<Integer> input = AnnTicTacToeAgent.inputVectorFromBoard(gameState.board, inputVectorSize)
+                            List<Double> input = AnnTicTacToeAgent.inputVectorFromBoard(gameState.board, inputVectorSize)
                             List<Double> targetOutput = cords2TargetOutput_9(gameState.nextMove.cell)
                             // train the network
                             ann.train(input, targetOutput, ++sample)
                         }
                     }
-                    System.out.println("Training for game executed: " + boardToString(g.board))
-
+                    System.out.println(++gameNo + " game trained: " + boardToString(g.board))
                 }
             }
 
         then:  // save trained network to file
-            ann.serializeToFile()
+            ann.serializeToFile(epochSize)
             true
 
     }
@@ -152,7 +154,7 @@ class TicTacToeMachineLearningSpec extends Specification
     {
         given:
             AnnTicTacToeAgent annTicTacToeAgent =  new AnnTicTacToeAgent("x");
-            annTicTacToeAgent.init("net-9-27-18-12-9-20210115-2246.ann")
+            annTicTacToeAgent.init("net-18-27-18-9-20210116-2105.ann")
         and:
             RandomTicTacToeAgent randomAgent = new RandomTicTacToeAgent("o")
             String[][] board = [["x", "o", " "], [" ", " ", " "], [" ", " ", " "]]
@@ -185,9 +187,11 @@ class TicTacToeMachineLearningSpec extends Specification
             int sampleNumber = 0
             MinMaxTicTacToeAgent minMaxAgent = new MinMaxTicTacToeAgent("x")
             RandomTicTacToeAgent randomAgent = new RandomTicTacToeAgent("o")
+        and:
+            Integer epochSize = 5000
 
         when:
-            5000.times {
+            epochSize.times {
                 String[][] board = [[" ", " ", " "], [" ", " ", " "], [" ", " ", " "]]
                 while(true) {
                     BoardCell targetMoveX = minMaxAgent.getFirstNextMove(board)
@@ -211,7 +215,7 @@ class TicTacToeMachineLearningSpec extends Specification
             }
 
         then:
-            ann.serializeToFile()
+            ann.serializeToFile(epochSize)
             true
     }
 
@@ -233,9 +237,10 @@ class TicTacToeMachineLearningSpec extends Specification
             int sampleNumber = 0, gameNo = 0
             Integer batchSize = 1000
             final Map<String, String[][]> uniqueGameStateMap = new HashMap<>()
+            Integer epochSize = 1000
 
         when:
-            1000.times {
+            epochSize.times {
                 String[][] board = [[" ", " ", " "], [" ", " ", " "], [" ", " ", " "]]
 
                 while(true)
@@ -283,7 +288,7 @@ class TicTacToeMachineLearningSpec extends Specification
             }
 
         then:
-            ann.serializeToFile()
+            ann.serializeToFile(epochSize)
             //ann.visualize()
             true
 

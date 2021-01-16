@@ -48,7 +48,7 @@ class NeuralNetworkSpec extends Specification
                .learningRate(0.01d)
                .initialize(WeightInitType.DEFAULT)
         and:
-            List<Integer> inputs = [ 1, 0, 1, 0, 1]
+            List<Double> inputs = [ 1.0d, 0.0d, 1.0d, 0.0d, 1.0d]
 
         when:
             List<Double> outputValues = net.predict(inputs)
@@ -95,10 +95,10 @@ class NeuralNetworkSpec extends Specification
 
         where:
             activationFunction          | inputs      | targets
-            TransferFunction.SIGMOID    | [ 1, 0, 1 ] | [ 1.0d, 0.0d ]
-            TransferFunction.TANH       | [ 1, 0, 1 ] | [ 1.0d, 0.0d ]
-            TransferFunction.SOFTMAX    | [ 1, 0, 1 ] | [ 1.0d, 0.0d ]
-            TransferFunction.RELU    | [ 1, 0, 1 ] | [ 1.0d, 0.0d ]
+            TransferFunction.SIGMOID    | [ 1.0d, 0.0d, 1.0d ] | [ 1.0d, 0.0d ]
+            TransferFunction.TANH       | [ 1.0d, 0.0d, 1.0d ] | [ 1.0d, 0.0d ]
+            TransferFunction.SOFTMAX    | [ 1.0d, 0.0d, 1.0d ] | [ 1.0d, 0.0d ]
+            TransferFunction.RELU       | [ 1.0d, 0.0d, 1.0d ] | [ 1.0d, 0.0d ]
     }
 
 
@@ -114,10 +114,10 @@ class NeuralNetworkSpec extends Specification
                 .initialize(WeightInitType.XAVIER)
 
         when:
-            List dataSet = [ [ inputs: [ 0, 0 ], targets: [0.0d] ],
-                             [ inputs: [ 0, 1 ], targets: [1.0d] ],
-                             [ inputs: [ 1, 0 ], targets: [2.0d] ],
-                             [ inputs: [ 1, 1 ], targets: [3.0d] ] ]
+            List dataSet = [ [ inputs: [ 0.0d, 0.0d ], targets: [0.0d] ],
+                             [ inputs: [ 0.0d, 1.0d ], targets: [1.0d] ],
+                             [ inputs: [ 1.0d, 0.0d ], targets: [2.0d] ],
+                             [ inputs: [ 1.0d, 1.0d ], targets: [3.0d] ] ]
             100.times {
                 int sampleNo = 0
                 dataSet.forEach( d -> {
@@ -146,10 +146,10 @@ class NeuralNetworkSpec extends Specification
                 .initialize(WeightInitType.DEFAULT)
 
         when:
-            List dataSet = [ [ inputs: [ 0, 0 ], targets: [0.0d] ],
-                             [ inputs: [ 0, 1 ], targets: [1.0d] ],
-                             [ inputs: [ 1, 0 ], targets: [0.0d] ],
-                             [ inputs: [ 1, 1 ], targets: [1.0d] ] ]
+            List dataSet = [ [ inputs: [ 0.0d, 0.0d ], targets: [0.0d] ],
+                             [ inputs: [ 0.0d, 1.0d ], targets: [1.0d] ],
+                             [ inputs: [ 1.0d, 0.0d ], targets: [0.0d] ],
+                             [ inputs: [ 1.0d, 1.0d ], targets: [1.0d] ] ]
             100.times {
                 int sampleNo = 0
                 dataSet.forEach( d -> {
@@ -179,12 +179,12 @@ class NeuralNetworkSpec extends Specification
 
 
         when:                                              // even, odd
-            List dataSet = [ [ inputs: [ 0, 0, 1 ], targets: [0.0d, 1.0d] ],
-                             [ inputs: [ 0, 1, 0 ], targets: [1.0d, 0.0d] ],
-                             [ inputs: [ 0, 1, 1 ], targets: [0.0d, 1.0d] ],
-                             [ inputs: [ 1, 0, 0 ], targets: [1.0d, 0.0d] ],
-                             [ inputs: [ 1, 0, 1 ], targets: [0.0d, 1.0d] ],
-                             [ inputs: [ 1, 1, 1 ], targets: [1.0d, 0.0d] ] ]
+            List dataSet = [ [ inputs: [ 0.0d, 0.0d, 1.0d ], targets: [0.0d, 1.0d] ],
+                             [ inputs: [ 0.0d, 1.0d, 0.0d ], targets: [1.0d, 0.0d] ],
+                             [ inputs: [ 0.0d, 1.0d, 1.0d ], targets: [0.0d, 1.0d] ],
+                             [ inputs: [ 1.0d, 0.0d, 0.0d ], targets: [1.0d, 0.0d] ],
+                             [ inputs: [ 1.0d, 0.0d, 1.0d ], targets: [0.0d, 1.0d] ],
+                             [ inputs: [ 1.0d, 1.0d, 1.0d ], targets: [1.0d, 0.0d] ] ]
 
             500.times {
                 int sampleNo = 0
@@ -238,7 +238,7 @@ class NeuralNetworkSpec extends Specification
                .learningRate(0.2d)
                .initialize(WeightInitType.DEFAULT)
         and:
-            final String annFileName = ann.serializeToFile()
+            final String annFileName = ann.serializeToFile(1)
 
         when:
             final NeuralNetwork readAnn = NeuralNetwork.deserialize(annFileName)
