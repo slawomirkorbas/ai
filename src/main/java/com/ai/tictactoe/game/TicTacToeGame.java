@@ -16,7 +16,7 @@ public class TicTacToeGame implements Serializable
     public String whoWon = null;
 
     /** all game states (boards) **/
-    public List<BoardStatus> states = new ArrayList<>();
+    public List<GameState> states = new ArrayList<>();
 
     public boolean finished = false;
 
@@ -25,16 +25,16 @@ public class TicTacToeGame implements Serializable
     public TicTacToeGame()
     {
         // add initial game state
-        states.add(new BoardStatus(TicTacToeAgent.copyBoard(this.board)));
+        states.add(new GameState(TicTacToeAgent.copyBoard(this.board)));
     }
 
-    public void update(final GameResult result, BoardCell nextMove)
+    public void update(final GameResult result, Move nextMove )
     {
         //store next move in previous game state
-        states.get(states.size() -1).nextMove = nextMove;
+        states.get(states.size()-1).nextMove = nextMove;
 
         //adds new game state
-        states.add(new BoardStatus(TicTacToeAgent.copyBoard(board)));
+        states.add(new GameState(TicTacToeAgent.copyBoard(board)));
         if(result != GameResult.CONTINUE)
         {
             finished = true;
@@ -57,13 +57,13 @@ public class TicTacToeGame implements Serializable
     public String generateKey()
     {
         this.key = "";
-        for(BoardStatus boardStatus : states)
+        for(GameState gameState : states)
         {
-            for(int r = 0; r < boardStatus.board.length; r++)
+            for(int r = 0; r < gameState.board.length; r++)
             {
-                for(int c = 0; c < boardStatus.board.length; c++)
+                for(int c = 0; c < gameState.board.length; c++)
                 {
-                    key += (boardStatus.board[r][c].trim().isEmpty() ? "." : boardStatus.board[r][c]);
+                    key += (gameState.board[r][c].trim().isEmpty() ? "." : gameState.board[r][c]);
                 }
             }
             key += "|";

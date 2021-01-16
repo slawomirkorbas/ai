@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Random;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
@@ -92,25 +93,32 @@ public class NeuralNetwork implements Serializable
     public NeuralNetwork initialize(WeightInitType initType)
     {
         this.weightInitType = initType;
-        switch(this.weightInitType)
-        {
-            case DEFAULT: break;
-            case XAVIER: // not sure if it is real XAVIER...
-                layers.stream().forEach( l -> {
-                    l.getNeuronList().stream().forEach( n -> {
-                        List<DefaultWeightedEdge> inputEdges = n.getInputEdges(net);
-                        if(inputEdges.size() > 0)
+        layers.stream().forEach( l -> {
+            l.getNeuronList().stream().forEach( n -> {
+                List<DefaultWeightedEdge> inputEdges = n.getInputEdges(net);
+                if(inputEdges.size() > 0)
+                {
+                    for( DefaultWeightedEdge edge : inputEdges)
+                    {
+                        Double weight = net.getEdgeWeight(edge);
+                        switch(this.weightInitType)
                         {
-                            Double xavierWeight = Double.valueOf(1.0/inputEdges.size());
-                            for( DefaultWeightedEdge edge : inputEdges)
-                            {
-                                net.setEdgeWeight(edge, xavierWeight);
-                            }
+                            case DEFAULT:
+                                break;
+                            case RANDOM:
+                                weight = ((new Random()).nextDouble() - 0.5d) * 4d;
+                                break;
+                            case XAVIER:
+                                Double.valueOf(1.0/inputEdges.size());
+                                break;
                         }
-                    });
-                });
-                break;
-        }
+                        net.setEdgeWeight(edge, weight);
+                    }
+                }
+            });
+        });
+
+
         return this;
     }
 

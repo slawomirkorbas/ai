@@ -94,9 +94,11 @@ class NeuralNetworkSpec extends Specification
             }
 
         where:
-            activationFunction       | inputs      | targets
-            TransferFunction.SIGMOID | [ 1, 0, 1 ] | [ 1.0d, 0.0d ]
-            TransferFunction.TANH    | [ 1, 0, 1 ] | [ 1.0d, 0.0d ]
+            activationFunction          | inputs      | targets
+            TransferFunction.SIGMOID    | [ 1, 0, 1 ] | [ 1.0d, 0.0d ]
+            TransferFunction.TANH       | [ 1, 0, 1 ] | [ 1.0d, 0.0d ]
+            TransferFunction.SOFTMAX    | [ 1, 0, 1 ] | [ 1.0d, 0.0d ]
+            TransferFunction.RELU    | [ 1, 0, 1 ] | [ 1.0d, 0.0d ]
     }
 
 

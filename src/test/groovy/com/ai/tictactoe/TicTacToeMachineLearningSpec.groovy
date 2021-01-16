@@ -1,7 +1,7 @@
 package com.ai.tictactoe
 
 import com.ai.tictactoe.game.AnnTicTacToeAgent
-import com.ai.tictactoe.game.BoardStatus
+import com.ai.tictactoe.game.GameState
 import com.ai.tictactoe.game.GameResult
 import com.ai.tictactoe.game.MinMaxTicTacToeAgent
 import com.ai.tictactoe.game.RandomTicTacToeAgent
@@ -104,40 +104,41 @@ class TicTacToeMachineLearningSpec extends Specification
     def 'File based supervised learning'()
     {
         given:
-                NeuralNetwork ann = nnf.build()
+        NeuralNetwork ann = nnf.build()
                 .input(18, "I")
-                .hidden(27, "H1", 0.01d, TransferFunction.TANH)
-                .hidden(18, "H2", 0.01d, TransferFunction.TANH)
-                .output(9 , "O" , 0.01d, TransferFunction.SOFTMAX, LossFunction.CROSS_ENTROPY)
+                .hidden(27, "H1", 0.1d, TransferFunction.TANH)
+                .hidden(18, "H2", 0.1d, TransferFunction.TANH)
+                .output(9 , "O" , 0.1d, TransferFunction.SOFTMAX, LossFunction.CROSS_ENTROPY)
                 .learningRate(0.2d)
-                .initialize(WeightInitType.XAVIER)
+                .initialize(WeightInitType.RANDOM)
+
         and:
             ObjectMapper mapper = new ObjectMapper()
-            final File jsonGamesFile = new File("game-batch-mmX-vs-rndO-2424.json")
+            final File jsonGamesFile = new File("game-batch-rndX-vs-rndO-25947.json")
             List<TicTacToeGame> gameList = mapper.readValue(jsonGamesFile, List<TicTacToeGame>.class)
         and:
             int dataSetNo = 1, sample = 0
             int inputVectorSize = ann.getInputLayer().numberOfNeurons()
 
         when:
-            5.times {
+            20.times {
                 System.out.println("Batch #" + dataSetNo++)
                 for (TicTacToeGame g : gameList)
                 {
-                    if(g.whoWon == null || g.whoWon.equals("x")) // train network for draws and wins only
+                    String effectiveFigure =  g.whoWon == null ? "x" : g.whoWon;
+                    for(GameState gameState : g.states)
                     {
-                        for(BoardStatus boardStatus : g.states)
+                        // teach the network only for the effective moves leading to draws or wins
+                        if(gameState.nextMove != null && gameState.nextMove.figure.equals(effectiveFigure))
                         {
-                            if(boardStatus.nextMove != null)
-                            {
-                                List<Integer> input = AnnTicTacToeAgent.inputVectorFromBoard(boardStatus.board, inputVectorSize)
-                                List<Double> targetOutput = cords2TargetOutput_9(boardStatus.nextMove)
-                                // train the network
-                                ann.train(input, targetOutput, ++sample)
-                            }
+                            List<Integer> input = AnnTicTacToeAgent.inputVectorFromBoard(gameState.board, inputVectorSize)
+                            List<Double> targetOutput = cords2TargetOutput_9(gameState.nextMove.cell)
+                            // train the network
+                            ann.train(input, targetOutput, ++sample)
                         }
-                        System.out.println("Training for game executed: " + boardToString(g.board))
                     }
+                    System.out.println("Training for game executed: " + boardToString(g.board))
+
                 }
             }
 
@@ -151,7 +152,7 @@ class TicTacToeMachineLearningSpec extends Specification
     {
         given:
             AnnTicTacToeAgent annTicTacToeAgent =  new AnnTicTacToeAgent("x");
-            annTicTacToeAgent.init("net-18-27-18-9-20210115-1945.ann")
+            annTicTacToeAgent.init("net-9-27-18-12-9-20210115-2246.ann")
         and:
             RandomTicTacToeAgent randomAgent = new RandomTicTacToeAgent("o")
             String[][] board = [["x", "o", " "], [" ", " ", " "], [" ", " ", " "]]

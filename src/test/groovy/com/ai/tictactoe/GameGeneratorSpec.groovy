@@ -1,12 +1,14 @@
 package com.ai.tictactoe
 
+import com.ai.tictactoe.game.GameGenerator
 import com.ai.tictactoe.game.RandomTicTacToeAgent
 import com.ai.tictactoe.game.TicTacToeGame
 import com.fasterxml.jackson.databind.ObjectMapper
 import spock.lang.Specification
 import spock.lang.Unroll
 
-class TictactoeGamesGenerator extends Specification
+
+class GameGeneratorSpec extends Specification
 {
 
     @Unroll
@@ -14,9 +16,10 @@ class TictactoeGamesGenerator extends Specification
     {
         given:
             ObjectMapper mapper = new ObjectMapper()
+            GameGenerator generator = new GameGenerator()
 
         when:
-            List<TicTacToeGame> totalGames = TictactoeApplication.generateGames(playerX, playerO, 50000)
+            List<TicTacToeGame> totalGames = generator.generateGames(playerX, playerO, 50000)
         then:
             totalGames.size() > 0
         and:

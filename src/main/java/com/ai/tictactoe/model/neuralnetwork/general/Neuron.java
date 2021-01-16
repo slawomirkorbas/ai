@@ -179,28 +179,4 @@ public class Neuron implements Serializable
      */
     final Map<DefaultWeightedEdge, Double> avgGradientPerInputWeightMap = new HashMap<>();
 
-    /**
-     * Not used so far...
-     * @param inputEdge
-     * @param sampleNo
-     * @param d_Etotal_w
-     * @return
-     */
-    public Double updateAverageGradientForWeight(final DefaultWeightedEdge inputEdge,
-                                                 final int sampleNo,
-                                                 final Double d_Etotal_w)
-    {
-        Double avg_gradient_per_weight = avgGradientPerInputWeightMap.get(inputEdge);
-        if(avg_gradient_per_weight == null)
-        {
-            avg_gradient_per_weight = 0.0;
-        }
-        avg_gradient_per_weight = ((avg_gradient_per_weight + d_Etotal_w)/sampleNo);
-        avgGradientPerInputWeightMap.put(inputEdge, avg_gradient_per_weight);
-        return avg_gradient_per_weight;
-    }
-
-
-
-
 }
