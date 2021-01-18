@@ -5,7 +5,9 @@ package com.ai.tictactoe.model.neuralnetwork.general;
  */
 public enum WeightInitType
 {
-    /** No special weight initialization algorithm are used - just hardcoded values from layer configuration **/
+    /** No special weight initialization algorithm are used - just hardcoded values from layer configuration
+     * not recommended as eg. similar or the same weight creates symtry within the network and the learning process
+     * may be not effective **/
     DEFAULT,
 
     /** Weights are initialized randomly between 0.1 and 0.9 **/

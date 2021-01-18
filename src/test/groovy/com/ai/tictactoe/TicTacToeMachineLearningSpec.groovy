@@ -7,7 +7,7 @@ import com.ai.tictactoe.game.MinMaxTicTacToeAgent
 import com.ai.tictactoe.game.RandomTicTacToeAgent
 import com.ai.tictactoe.game.TicTacToeAgent
 import com.ai.tictactoe.game.TicTacToeGame
-import com.ai.tictactoe.model.neuralnetwork.general.LossFunction
+import com.ai.tictactoe.model.neuralnetwork.general.CostFunction
 import com.ai.tictactoe.model.neuralnetwork.general.NeuralNetwork
 import com.ai.tictactoe.model.neuralnetwork.general.NeuralNetworkFactory
 import com.ai.tictactoe.model.neuralnetwork.general.TransferFunction
@@ -37,8 +37,8 @@ class TicTacToeMachineLearningSpec extends Specification
                     .input(18, "I")
                     .hidden(15, "H1", 0.01d, TransferFunction.TANH)
                     .hidden(12, "H2", 0.01d, TransferFunction.TANH)
-                    .output(9 , "O" , 0.01d, TransferFunction.SOFTMAX, LossFunction.CROSS_ENTROPY)
-                    //.output(9 , "O" , 0.01d, TransferFunction.TANH, LossFunction.MSE)
+                    .output(9 , "O" , 0.01d, TransferFunction.SOFTMAX, CostFunction.CROSS_ENTROPY)
+                    //.output(9 , "O" , 0.01d, TransferFunction.TANH, CostFunction.MSE)
                     .learningRate(0.1d)
                     .initialize(WeightInitType.XAVIER)
         and:
@@ -52,7 +52,7 @@ class TicTacToeMachineLearningSpec extends Specification
             int batchNo = 1
             epochSize.times {
                 System.out.println("Batch #" + batchNo++)
-                playGamesAndTrain(emptyBoard(), ann, minMaxAgent, randomAgent, sampleNumber)
+                sampleNumber = playGamesAndTrain(emptyBoard(), ann, minMaxAgent, randomAgent, sampleNumber)
             }
 
         then:
@@ -64,7 +64,7 @@ class TicTacToeMachineLearningSpec extends Specification
                 v >= 0.0d && v <= 1.0d // all values should be between 0 and 1
             })
         and:
-            ann.serializeToFile(epochSize)
+            ann.serializeToFile(epochSize, sampleNumber)
             true
     }
 
@@ -73,8 +73,8 @@ class TicTacToeMachineLearningSpec extends Specification
         [[" ", " ", " "], [" ", " ", " "], [" ", " ", " "]]
     }
 
-    void playGamesAndTrain(final String[][] board, final NeuralNetwork ann,
-                                MinMaxTicTacToeAgent agentX, TicTacToeAgent agentO, int sample)
+    Integer playGamesAndTrain(final String[][] board, final NeuralNetwork ann,
+                                MinMaxTicTacToeAgent agentX, TicTacToeAgent agentO, Integer sample)
     {
         List<BoardCell> targetMovesX = agentX.computeBestMoves(board, "x")
         List<Integer> input = AnnTicTacToeAgent.board2Inputs_18(board)
@@ -94,9 +94,22 @@ class TicTacToeMachineLearningSpec extends Specification
             else
             {
                 System.out.println("Training for game executed: " + boardToString(tmp))
+                sample++
             }
         }
+        return sample
     }
+
+/*
+        NeuralNetwork ann = nnf.build()
+                .input(18, "I")
+                .hidden(18, "H1", 0.1d, TransferFunction.TANH)
+                .hidden(15, "H2", 0.1d, TransferFunction.TANH)
+                .hidden(12, "H3", 0.1d, TransferFunction.TANH)
+                .output(9 , "O" , 0.1d, TransferFunction.SOFTMAX, CostFunction.CROSS_ENTROPY)
+                .learningRate(0.2d)
+                .initialize(WeightInitType.RANDOM)
+ */
 
 
     /**
@@ -108,10 +121,10 @@ class TicTacToeMachineLearningSpec extends Specification
         given:
         NeuralNetwork ann = nnf.build()
                 .input(18, "I")
-                .hidden(27, "H1", 0.1d, TransferFunction.TANH)
-                .hidden(18, "H2", 0.1d, TransferFunction.TANH)
-                .output(9 , "O" , 0.1d, TransferFunction.SOFTMAX, LossFunction.CROSS_ENTROPY)
-                .learningRate(0.2d)
+                .hidden(36, "H1", 0.1d, TransferFunction.TANH)
+               // .hidden(18, "H2", 0.1d, TransferFunction.TANH)
+                .output(9 , "O" , 0.1d, TransferFunction.SOFTMAX, CostFunction.CROSS_ENTROPY)
+                .learningRate(0.1d)
                 .initialize(WeightInitType.RANDOM)
 
         and:
@@ -121,7 +134,7 @@ class TicTacToeMachineLearningSpec extends Specification
         and:
             int dataSetNo = 1, gameNo = 0, sample = 0
             int inputVectorSize = ann.getInputLayer().numberOfNeurons()
-            Integer epochSize = 100 // number of training iterations
+            Integer epochSize = 10 // number of training iterations
 
         when:
             epochSize.times {
@@ -145,19 +158,18 @@ class TicTacToeMachineLearningSpec extends Specification
             }
 
         then:  // save trained network to file
-            ann.serializeToFile(epochSize)
+            ann.serializeToFile(epochSize, gameList.size())
             true
-
     }
 
     def 'Next predicted move should be different than the first one during a game'()
     {
         given:
             AnnTicTacToeAgent annTicTacToeAgent =  new AnnTicTacToeAgent("x");
-            annTicTacToeAgent.init("net-18-27-18-9-20210116-2105.ann")
+            annTicTacToeAgent.init("net-18-36-9-batch-size-32887-epochs-10.ann")
         and:
             RandomTicTacToeAgent randomAgent = new RandomTicTacToeAgent("o")
-            String[][] board = [["x", "o", " "], [" ", " ", " "], [" ", " ", " "]]
+            String[][] board = [["x", "o", " "], [" ", "o", " "], [" ", " ", " "]]
 
         when:
             BoardCell moveX = annTicTacToeAgent.getNextMove(board)
@@ -180,7 +192,7 @@ class TicTacToeMachineLearningSpec extends Specification
                     .input(18, "I", )
                     .hidden(12, "H1", 0.01d, TransferFunction.TANH)
                     .hidden(9, "H2", 0.01d, TransferFunction.TANH)
-                    .output(1 , "O" , 0.01d, TransferFunction.RELU, LossFunction.MSE)
+                    .output(1 , "O" , 0.01d, TransferFunction.RELU, CostFunction.MSE)
                     .learningRate(0.1d)
                     .initialize(WeightInitType.XAVIER)
         and:
@@ -215,7 +227,7 @@ class TicTacToeMachineLearningSpec extends Specification
             }
 
         then:
-            ann.serializeToFile(epochSize)
+            ann.serializeToFile(epochSize, sampleNumber)
             true
     }
 
@@ -227,7 +239,7 @@ class TicTacToeMachineLearningSpec extends Specification
                     .input(18, "I" , null, null)
                     .hidden(15, "H1", 0.1d, TransferFunction.TANH)
                     .hidden(12, "H2", 0.1d, TransferFunction.TANH)
-                    .output(9 , "O" , 0.1d, TransferFunction.SIGMOID,  LossFunction.MSE)
+                    .output(9 , "O" , 0.1d, TransferFunction.SIGMOID,  CostFunction.MSE)
                     .learningRate(0.1d)
                     .initialize(WeightInitType.XAVIER)
         and:
@@ -288,7 +300,7 @@ class TicTacToeMachineLearningSpec extends Specification
             }
 
         then:
-            ann.serializeToFile(epochSize)
+            ann.serializeToFile(epochSize, sampleNumber)
             //ann.visualize()
             true
 

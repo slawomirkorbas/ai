@@ -22,15 +22,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
 import java.util.Random;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 /**
@@ -40,6 +34,7 @@ public class NeuralNetwork implements Serializable
 {
     private static final long serialVersionUID = 1L;
 
+    @Getter
     /** Weighted graph representing neural network **/
     private SimpleDirectedWeightedGraph<Neuron, DefaultWeightedEdge> net;
 
@@ -50,15 +45,9 @@ public class NeuralNetwork implements Serializable
     private WeightInitType weightInitType;
 
     /** Weight initializer **/
-    private static final Double DEFAULT_LEARNING_RATE = 0.01d;
+    private static final Double DEFAULT_LEARNING_RATE = 0.1d;
 
-    /** Derivatives of specific loss functions **/
-    public static final Map<LossFunction, BiFunction<Double, Double, Double>> lossDerivatives = new HashMap<>();
-    static
-    {
-        lossDerivatives.put( LossFunction.MSE, (t, y) -> -(t - y));
-        lossDerivatives.put( LossFunction.CROSS_ENTROPY, (t, y) -> y - t);
-    }
+
 
     /** List of layers**/
     @Getter
@@ -106,7 +95,7 @@ public class NeuralNetwork implements Serializable
                             case DEFAULT:
                                 break;
                             case RANDOM:
-                                weight = ((new Random()).nextDouble() - 0.5d) * 4d;
+                                weight = ((new Random()).nextDouble() - 0.5) * 2.0; // weight should be between -1 and 1
                                 break;
                             case XAVIER:
                                 Double.valueOf(1.0/inputEdges.size());
@@ -193,7 +182,7 @@ public class NeuralNetwork implements Serializable
                                 final String name,
                                 final Double initialWeight,
                                 TransferFunction transferFunc,
-                                LossFunction lossFunc)
+                                CostFunction lossFunc)
     {
         layer(new OutputLayer(noOfNeurons, name, initialWeight, transferFunc, lossFunc));
         return this;
@@ -265,17 +254,12 @@ public class NeuralNetwork implements Serializable
      * Train neural network (using example data targets).
      * Uses "back propagation" algorithm.
      *
-     * @param inputs
-     * @param targets
-     * @param sampleNumber
+     * @param inputs - input vector
+     * @param targets - output vector containing expected values
+     * @param sampleNumber - sample number
      */
-    public void train(final List<Double> inputs,  final List<Double> targets, int sampleNumber)
+    public void train(final List<Double> inputs, final List<Double> targets, int sampleNumber)
     {
-        if(layers.size() < 2 || inputs.isEmpty() || targets.isEmpty())
-        {
-            return;
-        }
-
         // predict results for given inputs...
         predict(inputs);
 
@@ -284,8 +268,83 @@ public class NeuralNetwork implements Serializable
     }
 
     /**
+     * Train Neural Network using given data set of examples. The training is stopped once total average error for
+     * the batch reaches acceptable 0.1 value or after 1000 iterations
+     * @param dataSet - data set containing examples
+     *
+     * @return average total error value
+     */
+    public Double train(final DataSet dataSet)
+    {
+        int epochs = 1000; // initial iterations number for the learning session
+        Double errorTotal = 0.00;
+        Double averageGradient = 0.00;
+        int epoch = 0;
+        while(epoch++ < epochs)
+        {
+            int samples = 1;
+            for(Example e : dataSet.examples)
+            {
+                // predict results for given inputs
+                List<Double> predicted = predict(e.inputs);
+
+                // back propagate error and update weights
+                backPropagate(e.targets);
+
+                // calculate average error for all the samples
+                errorTotal = (errorTotal + calcError(e.targets, predicted))/((double)(samples++));
+                averageGradient = (averageGradient + calcAverageGradient(e.targets, predicted))/((double)(samples++));
+            }
+            System.out.println("Avg gradient after epochs("+ epoch + "): " + averageGradient);
+
+            //TODO: check if it is not a local minimum!
+            if(epoch >= 5 &&
+               (-0.01 < averageGradient && averageGradient < 0.01) )
+            {
+                // Training for given data set can be stopped when the minimum (close to "0")
+                // for the stochastic gradient descent has been reached.
+                System.out.println("Gradient average is acceptable: " + averageGradient + ". Training finished after epochs " + epoch);
+                break;
+            }
+            errorTotal = 0.00;
+
+            //TODO: add an "ADAPTIVE" learning rate if the training is not effective with default learning rate (0.1)
+        }
+        return errorTotal;
+    }
+
+    /**
+     * Calculate single sample error (cost function) for given targets and predicted values. Calculation uses
+     * loss function associated with the output layer.
+     *
+     * @param targets   - vector with target values
+     * @param predicted - vector with predicted values
+     * @return error value
+     */
+    private Double calcError(List<Double> targets, List<Double> predicted)
+    {
+        Double sampleError = 0.00;
+        for(int i=0; i<targets.size(); i++)
+        {
+            sampleError += Loss.functions.get(getOutputLayer().costFunction).apply(targets.get(i), predicted.get(i));
+        }
+        return (sampleError/targets.size());
+    }
+
+
+    private Double calcAverageGradient(List<Double> targets, List<Double> predicted)
+    {
+        Double avgGrad = 0.00;
+        for(int i=0; i<targets.size(); i++)
+        {
+            avgGrad = Loss.derivatives.get(getOutputLayer().costFunction).apply(targets.get(i), predicted.get(i));
+        }
+        return (avgGrad/targets.size());
+    }
+
+    /**
      * Back propagation: calculate derivative of the cost(error) function with respect to input weights of specific layer's neurons
-     * @param targets
+     * @param targets - vector with target values
      */
     private void backPropagate(List<Double> targets)
     {
@@ -299,7 +358,7 @@ public class NeuralNetwork implements Serializable
                 if(currentLayer.isOutputLayer())
                 {
                     // Partial derivative of E (cost function value) with respect to Out (activation result(output))
-                    currentNeuron.d_E_total_out = lossDerivatives.get(((OutputLayer)currentLayer).lossFunction).apply(targets.get(i), currentNeuron.outputValue);
+                    currentNeuron.d_E_total_out = Loss.derivatives.get(((OutputLayer)currentLayer).costFunction).apply(targets.get(i), currentNeuron.outputValue);
                 }
                 else // Hidden layer
                 {
@@ -370,9 +429,11 @@ public class NeuralNetwork implements Serializable
 
     /**
      * Save Neural Network data to file
+     * @param - epoch size - informational number of epochs (training iterations) used during training process
+     * @batchSize - number of data samples in the data set (batch) used to train the network
      * @return file name
      */
-    public String serializeToFile(String epochSize)
+    public String serializeToFile(Integer epochSize, Integer batchSize) //TODO move batch size to incremented NeuralNetwork member
     {
         try
         {
@@ -381,8 +442,9 @@ public class NeuralNetwork implements Serializable
             {
                 fileName += "-" + l.getNeuronList().size();
             }
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmm");
-            fileName += "-" + formatter.format(LocalDateTime.now()) + "-epochs-" + epochSize + ".ann";
+            //DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmm");
+            //fileName += "-" + formatter.format(LocalDateTime.now()) + "batch-" + batchSize + "-epochs-" + epochSize + ".ann";
+            fileName += "-batch-size-" + batchSize + "-epochs-" + epochSize + ".ann";
             ByteArrayOutputStream stream = serialize();
             FileOutputStream fileOutputStream = new FileOutputStream(fileName);
             fileOutputStream.write(stream.toByteArray());

@@ -1,6 +1,7 @@
 package com.ai.tictactoe.model.neuralnetwork.general
 
-
+import org.jgrapht.graph.DefaultWeightedEdge
+import org.jgrapht.graph.SimpleDirectedWeightedGraph
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -13,7 +14,7 @@ class NeuralNetworkSpec extends Specification
         when:
             NeuralNetwork net = nnf.build()
                .input(27,  "P")
-               .output(9, "H", 0.01d, TransferFunction.TANH,  LossFunction.MSE)
+               .output(9, "O", 0.01d, TransferFunction.TANH,  CostFunction.MSE)
                .learningRate(0.01d)
                .initialize(WeightInitType.DEFAULT)
 
@@ -22,12 +23,37 @@ class NeuralNetworkSpec extends Specification
             net.getLayers().get(1).numberOfNeurons() == 9
     }
 
+    def "initialize: generate random weights properly"()
+    {
+        given:
+            NeuralNetwork ann = nnf.build()
+                    .input(5,  "P")
+                    .hidden(4, "H", 0.01d, TransferFunction.SIGMOID)
+                    .output(3, "O", 0.01d, TransferFunction.TANH,  CostFunction.MSE)
+                    .initialize(WeightInitType.RANDOM)
+        and:
+            final SimpleDirectedWeightedGraph net = ann.getNet()
+
+        expect:
+             ann.getLayers().forEach(l -> {
+                    l.getNeuronList().forEach( n ->
+                    {
+                        List<DefaultWeightedEdge> edges = n.getInputEdges(net)
+                        edges.forEach( e -> {
+                            assert(net.getEdgeWeight(e) <= 1.0d)
+                            assert(net.getEdgeWeight(e) >= -1.0d)
+                            System.out.println("Edge weight: " + net.getEdgeWeight(e))
+                        })
+                    })
+                })
+    }
+
     def "visualize: creates PNG file with neural network graph"()
     {
         given:
             NeuralNetwork net = nnf.build()
                .input(4, "P")
-               .output(2, "H", 0.01d, TransferFunction.TANH,  LossFunction.MSE)
+               .output(2, "H", 0.01d, TransferFunction.TANH,  CostFunction.MSE)
                .learningRate(0.01d)
                .initialize(WeightInitType.DEFAULT)
 
@@ -44,7 +70,7 @@ class NeuralNetworkSpec extends Specification
             NeuralNetwork net = nnf.build()
                .input(5, "I")
                .hidden(3, "H", 0.01d, TransferFunction.SIGMOID)
-               .output(2, "O", 0.01d, TransferFunction.TANH, LossFunction.MSE)
+               .output(2, "O", 0.01d, TransferFunction.TANH, CostFunction.MSE)
                .learningRate(0.01d)
                .initialize(WeightInitType.DEFAULT)
         and:
@@ -66,7 +92,7 @@ class NeuralNetworkSpec extends Specification
         given:
             NeuralNetwork net = nnf.build()
                 .input(3, "I")
-                .output(2, "O", 0.1d, activationFunction, LossFunction.MSE)
+                .output(2, "O", 0.1d, activationFunction, CostFunction.MSE)
                 .learningRate(0.2d)
                 .initialize(WeightInitType.DEFAULT)
         and:
@@ -94,7 +120,7 @@ class NeuralNetworkSpec extends Specification
             }
 
         where:
-            activationFunction          | inputs      | targets
+            activationFunction          | inputs               | targets
             TransferFunction.SIGMOID    | [ 1.0d, 0.0d, 1.0d ] | [ 1.0d, 0.0d ]
             TransferFunction.TANH       | [ 1.0d, 0.0d, 1.0d ] | [ 1.0d, 0.0d ]
             TransferFunction.SOFTMAX    | [ 1.0d, 0.0d, 1.0d ] | [ 1.0d, 0.0d ]
@@ -109,24 +135,20 @@ class NeuralNetworkSpec extends Specification
                 .input(2, "I")
                 .hidden(3, "H1", 0.2d, TransferFunction.TANH)
                 .hidden(3, "H2", 0.1d, TransferFunction.TANH)
-                .output(1, "O", 0.05d, TransferFunction.RELU,  LossFunction.MSE)
-                .learningRate(0.2d)
-                .initialize(WeightInitType.XAVIER)
+                .output(1, "O", 0.05d, TransferFunction.RELU,  CostFunction.MSE)
+                .initialize(WeightInitType.RANDOM) //TODO check why random doesn't work here sometimes bu XAVIER does...
+        and:
+            DataSet dataSet = new DataSet()
+            dataSet.addExample([ 0.0d, 0.0d ], [0.0d])
+            dataSet.addExample([ 0.0d, 1.0d ], [1.0d])
+            dataSet.addExample([ 1.0d, 0.0d ], [2.0d])
+            dataSet.addExample([ 1.0d, 1.0d ], [3.0d])
 
         when:
-            List dataSet = [ [ inputs: [ 0.0d, 0.0d ], targets: [0.0d] ],
-                             [ inputs: [ 0.0d, 1.0d ], targets: [1.0d] ],
-                             [ inputs: [ 1.0d, 0.0d ], targets: [2.0d] ],
-                             [ inputs: [ 1.0d, 1.0d ], targets: [3.0d] ] ]
-            100.times {
-                int sampleNo = 0
-                dataSet.forEach( d -> {
-                    net.train( d.inputs, d.targets, sampleNo++ )
-                })
-            }
+            net.train(dataSet)
 
         then:
-            dataSet.forEach( d -> {
+            dataSet.examples.forEach( d -> {
                 List<Double> predictedValues = net.predict(d.inputs)
                 Integer prediction = Math.round(predictedValues[0])
                 System.out.println("expected: " + d.targets[0] + ". predicted: " + prediction)
@@ -141,27 +163,23 @@ class NeuralNetworkSpec extends Specification
                 .input(2, "I")
                 .hidden(4, "H1", 0.3d, TransferFunction.TANH)
                 .hidden(3, "H2", 0.2d, TransferFunction.TANH)
-                .output(1, "O", 0.1d, TransferFunction.TANH, LossFunction.MSE)
-                .learningRate(0.5d)
-                .initialize(WeightInitType.DEFAULT)
+                .output(1, "O", 0.1d, TransferFunction.TANH, CostFunction.MSE)
+                .initialize(WeightInitType.RANDOM)
+        and:
+            DataSet dataSet = new DataSet()
+            dataSet.addExample([ 0.0d, 0.0d ], [0.0d])
+            dataSet.addExample([ 0.0d, 1.0d ], [1.0d])
+            dataSet.addExample([ 1.0d, 0.0d ], [0.0d])
+            dataSet.addExample([ 1.0d, 1.0d ], [1.0d])
 
         when:
-            List dataSet = [ [ inputs: [ 0.0d, 0.0d ], targets: [0.0d] ],
-                             [ inputs: [ 0.0d, 1.0d ], targets: [1.0d] ],
-                             [ inputs: [ 1.0d, 0.0d ], targets: [0.0d] ],
-                             [ inputs: [ 1.0d, 1.0d ], targets: [1.0d] ] ]
-            100.times {
-                int sampleNo = 0
-                dataSet.forEach( d -> {
-                    net.train( d.inputs, d.targets, sampleNo++ )
-                })
-            }
+            net.train(dataSet)
 
         then:
-            dataSet.forEach( d -> {
-                List<Double> predictedValues = net.predict(d.inputs)
-                System.out.println("expected: " + d.targets[0] + ". predicted: " + predictedValues[0])
-                assert(d.targets[0] ==  Math.round(predictedValues[0]))
+            dataSet.examples.forEach( e -> {
+                List<Double> predictedValues = net.predict(e.inputs)
+                System.out.println("expected: " + e.targets[0] + ". predicted: " + predictedValues[0])
+                assert(e.targets[0] ==  Math.round(predictedValues[0]))
             })
     }
 
@@ -173,7 +191,7 @@ class NeuralNetworkSpec extends Specification
                .input(3, "I")
                .hidden(5, "H1", 0.3d, TransferFunction.TANH)
                .hidden(3, "H2", 0.2d, TransferFunction.TANH)
-               .output(2, "O" , 0.1d, TransferFunction.SOFTMAX, LossFunction.CROSS_ENTROPY)
+               .output(2, "O" , 0.1d, TransferFunction.SOFTMAX, CostFunction.CROSS_ENTROPY)
                .learningRate(0.5d)
                .initialize(WeightInitType.XAVIER)
 
@@ -207,7 +225,7 @@ class NeuralNetworkSpec extends Specification
         given:
             NeuralNetwork ann = nnf.build()
                 .input(4, "I")
-                .output(3, "O" , 100d, TransferFunction.SOFTMAX, LossFunction.CROSS_ENTROPY)
+                .output(3, "O" , 100d, TransferFunction.SOFTMAX, CostFunction.CROSS_ENTROPY)
                 .learningRate(0.5d)
                 .initialize(WeightInitType.DEFAULT)
         and:
@@ -234,11 +252,11 @@ class NeuralNetworkSpec extends Specification
             NeuralNetwork ann = nnf.build()
                .input(5, "I")
                .hidden(3, "H", 0.2d, TransferFunction.SIGMOID)
-               .output(1, "O", 1.0d, TransferFunction.TANH, LossFunction.MSE)
+               .output(1, "O", 1.0d, TransferFunction.TANH, CostFunction.MSE)
                .learningRate(0.2d)
-               .initialize(WeightInitType.DEFAULT)
+               .initialize(WeightInitType.RANDOM)
         and:
-            final String annFileName = ann.serializeToFile(1)
+            final String annFileName = ann.serializeToFile(1,1)
 
         when:
             final NeuralNetwork readAnn = NeuralNetwork.deserialize(annFileName)
@@ -260,7 +278,7 @@ class NeuralNetworkSpec extends Specification
 //                    .layer(0, new DenseLayer.Builder().nIn(2).nOut(8).build())
 //                    .layer(1, new DenseLayer.Builder().nIn(8).nOut(8).build())
 //                    .layer(2, new OutputLayer.Builder(
-//                            LossFunctions.LossFunction.SQUARED_LOSS)
+//                            LossFunctions.CostFunction.SQUARED_LOSS)
 //                            .activation(Activation.RELU) //SOFTMAX
 //                            .nIn(8).nOut(1).build())
 //                    .build()
