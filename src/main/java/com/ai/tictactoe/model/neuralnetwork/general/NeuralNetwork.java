@@ -269,14 +269,14 @@ public class NeuralNetwork implements Serializable
 
     /**
      * Train Neural Network using given data set of examples. The training is stopped once total average error for
-     * the batch reaches acceptable 0.1 value or after 1000 iterations
+     * the batch reaches acceptable 0.1 value or after 1000 iterations. The funcion uses stochastic gradient descent.
      * @param dataSet - data set containing examples
      *
-     * @return average total error value
+     * @return epoch count needed to find minimum of gradient
      */
-    public Double train(final DataSet dataSet)
+    public int train(final DataSet dataSet)
     {
-        int epochs = 1000; // initial iterations number for the learning session
+        int epochs = 200; // initial iterations number for the learning session
         Double errorTotal = 0.00;
         Double averageGradient = 0.00;
         int epoch = 0;
@@ -310,7 +310,7 @@ public class NeuralNetwork implements Serializable
 
             //TODO: add an "ADAPTIVE" learning rate if the training is not effective with default learning rate (0.1)
         }
-        return errorTotal;
+        return epoch;
     }
 
     /**

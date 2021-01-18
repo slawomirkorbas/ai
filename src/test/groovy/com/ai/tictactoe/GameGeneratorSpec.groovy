@@ -1,6 +1,7 @@
 package com.ai.tictactoe
 
 import com.ai.tictactoe.game.GameGenerator
+import com.ai.tictactoe.game.MinMaxTicTacToeAgent
 import com.ai.tictactoe.game.RandomTicTacToeAgent
 import com.ai.tictactoe.game.TicTacToeGame
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -19,7 +20,7 @@ class GameGeneratorSpec extends Specification
             GameGenerator generator = new GameGenerator()
 
         when:
-            List<TicTacToeGame> totalGames = generator.generateGames(playerX, playerO, 100000)
+            List<TicTacToeGame> totalGames = generator.generateGames(playerX, playerO, 2000)
         then:
             totalGames.size() > 0
         and:
@@ -29,8 +30,8 @@ class GameGeneratorSpec extends Specification
 
         where:
             playerX                          | playerO                       | gameName
-            //new MinMaxTicTacToeAgent("x")    | new MinMaxTicTacToeAgent("o") | "mmX-vs-mmO"
+            new MinMaxTicTacToeAgent("x") | new MinMaxTicTacToeAgent("o") | "mmX-vs-mmO"
             //new MinMaxTicTacToeAgent("x")    | new RandomTicTacToeAgent("o") | "mmX-vs-rndO"
-            new RandomTicTacToeAgent("x")    | new RandomTicTacToeAgent("o") | "rndX-vs-rndO"
+            //new RandomTicTacToeAgent("x")    | new RandomTicTacToeAgent("o") | "rndX-vs-rndO"
     }
 }

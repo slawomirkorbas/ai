@@ -10,7 +10,7 @@ public enum WeightInitType
      * may be not effective **/
     DEFAULT,
 
-    /** Weights are initialized randomly between 0.1 and 0.9 **/
+    /** Weights are initialized randomly between -1.0 and 1.0 **/
     RANDOM,
 
     /** Weights will be proportional to number of neurons within the layer **/

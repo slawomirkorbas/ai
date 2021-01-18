@@ -192,27 +192,20 @@ class NeuralNetworkSpec extends Specification
                .hidden(5, "H1", 0.3d, TransferFunction.TANH)
                .hidden(3, "H2", 0.2d, TransferFunction.TANH)
                .output(2, "O" , 0.1d, TransferFunction.SOFTMAX, CostFunction.CROSS_ENTROPY)
-               .learningRate(0.5d)
-               .initialize(WeightInitType.XAVIER)
+               .initialize(WeightInitType.RANDOM)
+        and:
+            DataSet dataSet = new DataSet()         // even, odd
+            dataSet.addExample( [ 0.0d, 0.0d, 1.0d ], [0.0d, 1.0d])
+            dataSet.addExample( [ 0.0d, 1.0d, 0.0d ], [1.0d, 0.0d])
+            dataSet.addExample( [ 0.0d, 1.0d, 1.0d ], [0.0d, 1.0d])
+            dataSet.addExample( [ 1.0d, 0.0d, 0.0d ], [1.0d, 0.0d])
+            dataSet.addExample( [ 1.0d, 0.0d, 1.0d ], [0.0d, 1.0d])
+            dataSet.addExample( [ 1.0d, 1.0d, 1.0d ], [1.0d, 0.0d])
 
-
-        when:                                              // even, odd
-            List dataSet = [ [ inputs: [ 0.0d, 0.0d, 1.0d ], targets: [0.0d, 1.0d] ],
-                             [ inputs: [ 0.0d, 1.0d, 0.0d ], targets: [1.0d, 0.0d] ],
-                             [ inputs: [ 0.0d, 1.0d, 1.0d ], targets: [0.0d, 1.0d] ],
-                             [ inputs: [ 1.0d, 0.0d, 0.0d ], targets: [1.0d, 0.0d] ],
-                             [ inputs: [ 1.0d, 0.0d, 1.0d ], targets: [0.0d, 1.0d] ],
-                             [ inputs: [ 1.0d, 1.0d, 1.0d ], targets: [1.0d, 0.0d] ] ]
-
-            500.times {
-                int sampleNo = 0
-                dataSet.forEach( d -> {
-                    net.train( d.inputs, d.targets, sampleNo++ )
-                })
-            }
-
-            then:
-                dataSet.forEach( d -> {
+        when:
+            net.train(dataSet)
+        then:
+            dataSet.examples.forEach( d -> {
                     List<Double> predictedValues = net.predict(d.inputs)
                     System.out.println("target: " + d.targets[0] + ", " + d.targets[1] + ". predicted: " + predictedValues[0] + ", " + predictedValues[1])
                     assert(d.targets[0] == Math.round(predictedValues[0]))
@@ -243,7 +236,7 @@ class NeuralNetworkSpec extends Specification
             totalSum == 1.0d
 
         where:
-            input << [[0, 3, 55, -12], [1000, 3, 2233, -1222]]
+            input << [[0.0d, 3.0d, 55.0d, -12.0d], [1000.0d, 3.0d, 2233.0d, -1222.0d]]
     }
 
     def 'serialization and deserialization works as expected'()

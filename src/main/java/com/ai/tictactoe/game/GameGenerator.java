@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 public class GameGenerator
 {
@@ -25,7 +26,8 @@ public class GameGenerator
         {
             GameResult result = GameResult.CONTINUE;
             TicTacToeGame newGame = new TicTacToeGame();
-            TicTacToeAgent currentPlayer = playerO;
+            // pick randomly the player who starts
+            TicTacToeAgent currentPlayer = (new Random()).nextInt(2) == 1 ? playerX : playerO;
             while(!newGame.isFinished())
             {
                 currentPlayer = currentPlayer == playerX ? playerO : playerX; // switch player
