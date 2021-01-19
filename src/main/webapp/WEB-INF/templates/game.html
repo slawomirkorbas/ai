@@ -19,7 +19,7 @@
                 min-height:50px;
                 text-align: center;
                 font-family: "Arial";
-                font-size: 36px;
+                font-size: 40px;
                 cursor: pointer;
             }
             td.tttField:hover {
@@ -120,6 +120,13 @@
             $("#2_0").html(boardDto.board[2][0]);
             $("#2_1").html(boardDto.board[2][1]);
             $("#2_2").html(boardDto.board[2][2]);
+
+            for( var row = 0; row < boardDto.board.length; row++ ) {
+                for( var col = 0; col < boardDto.board.length; col++ ) {
+                    $('#' + row + "_" + col).html(boardDto.board[row][col]);
+                    $('#' + row + "_" + col).css('color', boardDto.board[row][col] == 'x' ? 'blue' : 'green' );
+                }
+            }
 
             if(boardDto.result != null) {
                 //TODO mark inline figures with different colour
