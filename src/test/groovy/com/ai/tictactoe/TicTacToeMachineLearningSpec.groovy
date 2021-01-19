@@ -148,6 +148,50 @@ class TicTacToeMachineLearningSpec extends Specification
     }
 
 
+    def 'Performance test of specific ANN TicTacToe Agent against RandomTicTacToeAgent'()
+    {
+        given:
+            RandomTicTacToeAgent randomPlayer = new RandomTicTacToeAgent("o")
+            AnnTicTacToeAgent annPlayer = new AnnTicTacToeAgent("x")
+            annPlayer.init("net-27-36-9-20210119-0853-batch-size-630-epochs-1353.ann")
+        and:
+            int wins = 0, draws = 0, losses = 0
+            Integer gamesTotal = 10000
+
+        when:
+            gamesTotal.times {
+                String[][] board = emptyBoard()
+                GameResult result
+                TicTacToeAgent startingPlayer = annPlayer
+                TicTacToeAgent followingPlayer = randomPlayer
+                while(true)
+                {
+                    result = startingPlayer.doMove(board)
+                    if(GameResult.CONTINUE != result && startingPlayer == annPlayer)
+                    {
+                        wins = result == GameResult.WIN ? wins + 1 : wins
+                        draws = result == GameResult.DRAW ? draws + 1 : draws
+                        break
+                    }
+                    result = followingPlayer.doMove(board)
+                    if(GameResult.CONTINUE != result && followingPlayer == annPlayer)
+                    {
+                        wins = result == GameResult.WIN ? wins + 1 : wins
+                        draws = result == GameResult.DRAW ? draws + 1 : draws
+                        break
+                    }
+                }
+                System.out.println("Game result: " + result)
+                startingPlayer  = startingPlayer == annPlayer ? randomPlayer : annPlayer // swap players
+                followingPlayer = startingPlayer == annPlayer ? randomPlayer : annPlayer
+            }
+        then:
+            Double performance = (wins + draws)/gamesTotal * 100
+            performance >= 80
+            System.out.println("Overall performance of AnnTicTacToe player is: " + performance + "%")
+    }
+
+
     /**
      * This supervised learning procedure is using two players: MinMaxTicTacToeAgent paying against RandomTicTacToeAgent
      * @return file with "adjusted" neural network object
