@@ -40,8 +40,11 @@ public class GameGenerator
             {
                 newGame.whoWon = currentPlayer.playAs;
             }
-            uniqueGamesMap.put(newGame.generateKey(), newGame);
-            System.out.println("Played: " + total + ", unique stored: " + uniqueGamesMap.size());
+            String gameKey = newGame.generateKey();
+            if(null == uniqueGamesMap.put(gameKey, newGame))
+            {
+                System.out.println("Played: " + total + ", unique stored: " + uniqueGamesMap.size() + ". Last: " + gameKey);
+            }
         }
         return new ArrayList<>(uniqueGamesMap.values());
     }

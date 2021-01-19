@@ -29,122 +29,60 @@ class TicTacToeMachineLearningSpec extends Specification
     static final NeuralNetworkFactory nnf = new NeuralNetworkFactory()
 
     /**
-     * This supervised learning procedure is using two players: MinMaxTicTacToeAgent paying against RandomTicTacToeAgent
-     * @return file with "adjusted" neural network object
-     */
-    @Ignore
-    def 'Dynamic supervised learning using ANN having vector SOFTMAX output : train new tic-tac-toe network and serialize to file'()
-    {
-        given:
-            NeuralNetwork ann = nnf.build()
-                    .input(18, "I")
-                    .hidden(15, "H1", 0.01d, TransferFunction.TANH)
-                    .hidden(12, "H2", 0.01d, TransferFunction.TANH)
-                    .output(9 , "O" , 0.01d, TransferFunction.SOFTMAX, CostFunction.CROSS_ENTROPY)
-                    //.output(9 , "O" , 0.01d, TransferFunction.TANH, CostFunction.MSE)
-                    .learningRate(0.1d)
-                    .initialize(WeightInitType.XAVIER)
-        and:
-            int sampleNumber = 0
-            MinMaxTicTacToeAgent minMaxAgent = new MinMaxTicTacToeAgent("x")
-            RandomTicTacToeAgent randomAgent = new RandomTicTacToeAgent("o")
-        and:
-            Integer epochSize = 10
-
-        when:
-            int batchNo = 1
-            epochSize.times {
-                System.out.println("Batch #" + batchNo++)
-                sampleNumber = playGamesAndTrain(emptyBoard(), ann, minMaxAgent, randomAgent, sampleNumber)
-            }
-
-        then:
-            // smoke test for SOFTMAX results
-            String[][] board = [["x", "o", " "], [" ", " ", " "], [" ", " ", " "]]
-            List<Double> output = ann.predict(AnnTicTacToeAgent.board2Inputs_18(board))
-            output.forEach( v -> {
-                System.out.print(v + ", ")
-                v >= 0.0d && v <= 1.0d // all values should be between 0 and 1
-            })
-        and:
-            ann.serializeToFile(epochSize, sampleNumber)
-            true
-    }
-
-    String[][] emptyBoard()
-    {
-        [[" ", " ", " "], [" ", " ", " "], [" ", " ", " "]]
-    }
-
-    Integer playGamesAndTrain(final String[][] board, final NeuralNetwork ann,
-                                MinMaxTicTacToeAgent agentX, TicTacToeAgent agentO, Integer sample)
-    {
-        List<BoardCell> targetMovesX = agentX.computeBestMoves(board, "x")
-        List<Integer> input = AnnTicTacToeAgent.board2Inputs_18(board)
-        List<Double> targetOutput = cords2TargetOutput_9multi(targetMovesX)
-
-        // train the network
-        ann.train(input, targetOutput, ++sample)
-
-        for(BoardCell moveX : targetMovesX)
-        {
-            String[][] tmp = agentO.copyBoard(board)
-            tmp[moveX.row][moveX.col] = "x"
-            if(GameResult.CONTINUE == agentO.doMove(tmp))
-            {
-                playGamesAndTrain(tmp, ann, agentX, agentO, sample)
-            }
-            else
-            {
-                System.out.println("Training for game executed: " + boardToString(tmp))
-                sample++
-            }
-        }
-        return sample
-    }
-
-    /**
      * Machine learning based on game states stored in JSON file.
      */
     def 'File based supervised learning using JSON file with stored tic-tac-toe plays'()
     {
         given:
             NeuralNetwork ann = nnf.build()
-                    .input(18, "I")
-                    .hidden(15, "H1", 0.1d, TransferFunction.TANH)
-                    .hidden(12, "H2", 0.1d, TransferFunction.TANH)
+                    .input(27, "I")
+                    .hidden(36, "H1", 0.1d, TransferFunction.TANH)
+                    //.hidden(12, "H2", 0.1d, TransferFunction.TANH)
                     .output(9 , "O" , 0.1d, TransferFunction.SOFTMAX, CostFunction.CROSS_ENTROPY)
                     .initialize(WeightInitType.RANDOM)
-
         and:
-            ObjectMapper mapper = new ObjectMapper()
-            final File jsonGamesFile = new File("game-batch-mmX-vs-mmO-656.json")
-            List<TicTacToeGame> gameList = mapper.readValue(jsonGamesFile, List<TicTacToeGame>.class)
-        and:
-            // create datasets eg. 100 games per each chunk
-            List<DataSet> dataSets = prepareDatasets(gameList, 100, ann.getInputLayer().numberOfNeurons())
             int totalEpochs = 0
+            // create datasets eg. 200 games per each chunk
+            List<DataSet> dataSets_1 = prepareDatasetsFromFile("20210118-2323-game-batch-mmX-vs-rndO-315.json", 100,
+                    ann.getInputLayer().numberOfNeurons(),
+                    ann.getOutputLayer().numberOfNeurons())
+            List<DataSet> dataSets_2 = prepareDatasetsFromFile("20210118-2323-game-batch-mmX-vs-rndO-315.json", 100,
+                    ann.getInputLayer().numberOfNeurons(),
+                    ann.getOutputLayer().numberOfNeurons())
+
+
 
         when:
-            dataSets.forEach( dataSet -> {
+            dataSets_1.forEach( dataSet -> {
+                totalEpochs += ann.train(dataSet)
+            })
+        and:
+            dataSets_2.forEach( dataSet -> {
                 totalEpochs += ann.train(dataSet)
             })
 
+
         then:  // save trained network to file
-            ann.serializeToFile(totalEpochs, gameList.size())
+            ann.serializeToFile(totalEpochs, dataSets_1.size() + dataSets_2.size() )
             true
     }
 
     /**
      * Prepare list of data sets compatible wih NeuralNetwork
-     * @param gameList - list of games
+     * @param jsonGamesFile - JSON file storing games
      * @param chunkSize - chink size
      * @param inputSize - size of input vector (eg. number of input neurons in Neural Network)
+     * @param targetSize - size of target vector
      *
      * @return collection of datasets
      */
-    private List<DataSet> prepareDatasets(final List<TicTacToeGame> gameList, int chunkSize, int inputSize)
+    private List<DataSet> prepareDatasetsFromFile(final String jsonGamesFileName,
+                                          int chunkSize, int inputSize, int targetSize)
     {
+        ObjectMapper mapper = new ObjectMapper()
+        final File jsonGamesFile = new File(jsonGamesFileName)
+        List<TicTacToeGame> gameList = mapper.readValue(jsonGamesFile, List<TicTacToeGame>.class)
+
         List<DataSet> dataSets = new ArrayList<>()
         int chunkIndex = 0
         while(true)
@@ -161,7 +99,7 @@ class TicTacToeMachineLearningSpec extends Specification
                     if (gameState.nextMove != null && gameState.nextMove.figure.equals(effectiveFigure))
                     {
                         ds.addExample(AnnTicTacToeAgent.inputVectorFromBoard(gameState.board, inputSize),
-                                                        cords2TargetOutput_9(gameState.nextMove.cell))
+                                cords2TargetVector(gameState.nextMove.cell, targetSize))
                     }
                 }
                 if (ds.size() > 0) {
@@ -185,7 +123,7 @@ class TicTacToeMachineLearningSpec extends Specification
         int end = Math.min(start + chunkSize, inputList.size());
         if(start < end)
         {
-            return new ArrayList<>(inputList.subList(start, end));
+            return new ArrayList<>(inputList.subList(start, end))
         }
         return null
     }
@@ -195,7 +133,7 @@ class TicTacToeMachineLearningSpec extends Specification
     {
         given:
             AnnTicTacToeAgent annTicTacToeAgent =  new AnnTicTacToeAgent("x");
-            annTicTacToeAgent.init("net-18-15-12-9-batch-size-656-epochs-3308.ann")
+            annTicTacToeAgent.init("net-27-36-9-20210119-0853-batch-size-630-epochs-1353.ann")
         and:
             RandomTicTacToeAgent randomAgent = new RandomTicTacToeAgent("o")
             String[][] board = [["x", "o", " "], [" ", "o", " "], [" ", " ", " "]]
@@ -209,6 +147,74 @@ class TicTacToeMachineLearningSpec extends Specification
             moveX != annTicTacToeAgent.predictNextMove(board)
     }
 
+
+    /**
+     * This supervised learning procedure is using two players: MinMaxTicTacToeAgent paying against RandomTicTacToeAgent
+     * @return file with "adjusted" neural network object
+     */
+    def 'Dynamic supervised learning using ANN having vector SOFTMAX output : train new tic-tac-toe network and serialize to file'()
+    {
+        given:
+        NeuralNetwork ann = nnf.build()
+                .input(18, "I")
+                .hidden(15, "H1", 0.01d, TransferFunction.TANH)
+                .hidden(12, "H2", 0.01d, TransferFunction.TANH)
+                .output(9 , "O" , 0.01d, TransferFunction.SOFTMAX, CostFunction.CROSS_ENTROPY)
+                .initialize(WeightInitType.XAVIER)
+        and:
+            int sampleNumber = 0
+            MinMaxTicTacToeAgent minMaxAgent = new MinMaxTicTacToeAgent("x")
+            RandomTicTacToeAgent randomAgent = new RandomTicTacToeAgent("o")
+
+        when:
+        10.times {
+            playGamesAndTrain(emptyBoard(), ann, minMaxAgent, randomAgent, sampleNumber)
+        }
+
+        then:
+            // smoke test for SOFTMAX results
+//            String[][] board = [["x", "o", " "], [" ", " ", " "], [" ", " ", " "]]
+//            List<Double> output = ann.predict(AnnTicTacToeAgent.board2Inputs_18(board))
+//            output.forEach( v -> {
+//                System.out.print(v + ", ")
+//                v >= 0.0d && v <= 1.0d // all values should be between 0 and 1
+//            })
+//        and:
+            ann.serializeToFile(10, sampleNumber)
+            true
+    }
+
+    String[][] emptyBoard()
+    {
+        [[" ", " ", " "], [" ", " ", " "], [" ", " ", " "]]
+    }
+
+    Integer playGamesAndTrain(final String[][] board, final NeuralNetwork ann,
+                              MinMaxTicTacToeAgent agentX, TicTacToeAgent agentO, Integer sample)
+    {
+        List<BoardCell> targetMovesX = agentX.computeBestMoves(board, "x")
+        List<Integer> input = AnnTicTacToeAgent.board2Inputs_18(board)
+        List<Double> targetOutput = cords2TargetOutput_9multi(targetMovesX)
+
+        // train the network
+        ann.train(new DataSet(input,targetOutput))
+
+        for(BoardCell moveX : targetMovesX)
+        {
+            String[][] tmp = agentO.copyBoard(board)
+            tmp[moveX.row][moveX.col] = "x"
+            if(GameResult.CONTINUE == agentO.doMove(tmp))
+            {
+                playGamesAndTrain(tmp, ann, agentX, agentO, sample)
+            }
+            else
+            {
+                System.out.println("Training for game executed: " + boardToString(tmp))
+                sample++
+            }
+        }
+        return sample
+    }
 
     /**
      * This supervised learning procedure is using two players: MinMaxTicTacToeAgent paying against RandomTicTacToeAgent
@@ -372,6 +378,20 @@ class TicTacToeMachineLearningSpec extends Specification
             }
         }
         return targetOutput
+    }
+
+    private List<Double> cords2TargetVector(final BoardCell targetCell, int targetSize)
+    {
+        if(targetSize == 1)
+        {
+            Integer targetCellIndex = AnnTicTacToeAgent.rowCol2CellIndexMap.get(targetCell.row + "_" + targetCell.col)
+            return [Double.valueOf(targetCellIndex)]
+        }
+        else if (targetSize == 9)
+        {
+            return cords2TargetOutput_9(targetCell)
+        }
+        return null
     }
 
     List<Double> cords2TargetOutput_9(final BoardCell targetMove)

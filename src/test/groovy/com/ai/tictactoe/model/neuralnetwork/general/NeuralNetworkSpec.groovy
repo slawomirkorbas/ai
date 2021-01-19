@@ -136,7 +136,7 @@ class NeuralNetworkSpec extends Specification
                 .hidden(3, "H1", 0.2d, TransferFunction.TANH)
                 .hidden(3, "H2", 0.1d, TransferFunction.TANH)
                 .output(1, "O", 0.05d, TransferFunction.RELU,  CostFunction.MSE)
-                .initialize(WeightInitType.RANDOM) //TODO check why random doesn't work here sometimes bu XAVIER does...
+                .initialize(WeightInitType.XAVIER) //TODO check why random doesn't work here sometimes bu XAVIER does...
         and:
             DataSet dataSet = new DataSet()
             dataSet.addExample([ 0.0d, 0.0d ], [0.0d])

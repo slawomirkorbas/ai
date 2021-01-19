@@ -60,7 +60,7 @@ public class MinMaxTicTacToeAgent extends TicTacToeAgent
     public List<BoardCell> computeBestMoves(final String[][] board, final String figure)
     {
         List<BoardCell> bestPositions = new ArrayList<>();
-        Integer maxPts = null;
+        Double maxPts = null;
         if(gameState(board) == GameResult.CONTINUE)
         {
             for(int r = 0; r < board.length; r++)
@@ -71,7 +71,7 @@ public class MinMaxTicTacToeAgent extends TicTacToeAgent
                     {
                         String[][] matrixCopy = copyBoard(board);
                         matrixCopy[r][c] = figure;
-                        Integer pts = evaluateGames(matrixCopy, toggle(figure), 0);
+                        Double pts = evaluateGames(matrixCopy, toggle(figure), 0.0);
                         if(maxPts == null || pts == maxPts)
                         {
                             maxPts = pts;
@@ -98,22 +98,22 @@ public class MinMaxTicTacToeAgent extends TicTacToeAgent
      * @param result - total score
      * @return
      */
-    public Integer evaluateGames(final String[][] board, final String figure, Integer result)
+    public Double evaluateGames(final String[][] board, final String figure, Double result)
     {
-        Integer min = null;
-        Integer max = null;
+        Double min = null;
+        Double max = null;
         GameResult gameResult = gameState(board);
         if( gameResult == GameResult.LOST )
         {
-            result = -10;
+            result = -10.0/(double)countOccupiedFields(board);
         }
         else if( gameResult == GameResult.WIN )
         {
-            result = 10;
+            result = 10.0/(double)countOccupiedFields(board);
         }
         else if( gameResult == GameResult.DRAW )
         {
-            result = 0;
+            result = 0.0;
         }
         else if( gameResult == GameResult.CONTINUE )
         {
@@ -125,7 +125,7 @@ public class MinMaxTicTacToeAgent extends TicTacToeAgent
                     if( boardCopy[r][c].trim().isEmpty())
                     {
                         boardCopy[r][c] = figure;
-                        int pts = evaluateGames(boardCopy, toggle(figure), result);
+                        Double pts = evaluateGames(boardCopy, toggle(figure), result);
                         min = min == null ? pts : min;
                         max = max == null ? pts : max;
                         if( pts < min )

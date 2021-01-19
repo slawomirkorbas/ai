@@ -14,4 +14,13 @@ public class Example implements Serializable
 {
     List<Double> inputs;
     List<Double> targets;
+
+    public String toString()
+    {
+        String s = "";
+        for(Double i : inputs) {
+             s += String.valueOf(i);
+        }
+        return s;
+    }
 }

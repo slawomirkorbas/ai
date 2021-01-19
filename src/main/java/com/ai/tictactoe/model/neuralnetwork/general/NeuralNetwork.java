@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -277,12 +279,12 @@ public class NeuralNetwork implements Serializable
     public int train(final DataSet dataSet)
     {
         int epochs = 200; // initial iterations number for the learning session
-        Double errorTotal = 0.00;
-        Double averageGradient = 0.00;
         int epoch = 0;
         while(epoch++ < epochs)
         {
             int samples = 1;
+            Double errorTotal = 0.00;
+            Double avgErrorDelta = 0.00;
             for(Example e : dataSet.examples)
             {
                 // predict results for given inputs
@@ -292,18 +294,21 @@ public class NeuralNetwork implements Serializable
                 backPropagate(e.targets);
 
                 // calculate average error for all the samples
-                errorTotal = (errorTotal + calcError(e.targets, predicted))/((double)(samples++));
-                averageGradient = (averageGradient + calcAverageGradient(e.targets, predicted))/((double)(samples++));
-            }
-            System.out.println("Avg gradient after epochs("+ epoch + "): " + averageGradient);
+                errorTotal = (errorTotal + calcError(e.targets, predicted))/((double)(samples));
 
-            //TODO: check if it is not a local minimum!
-            if(epoch >= 5 &&
-               (-0.01 < averageGradient && averageGradient < 0.01) )
+                //System.out.println("Example " + e.toString() + " gradient: " + calcAverageErrorDelta(e.targets, predicted));
+                // sum up error delta and calculate average value for the specific epoch
+                avgErrorDelta = (avgErrorDelta + calcAverageErrorDelta(e.targets, predicted))/((double)(samples));
+                samples++;
+            }
+            System.out.println("Avg error delta after epochs("+ epoch + "): " + avgErrorDelta);
+
+            //TODO: make sure if it is not a local minimum!
+            if(epoch >= 2 &&  avgErrorDelta < 0.1 )
             {
                 // Training for given data set can be stopped when the minimum (close to "0")
                 // for the stochastic gradient descent has been reached.
-                System.out.println("Gradient average is acceptable: " + averageGradient + ". Training finished after epochs " + epoch);
+                System.out.println("Average error delta is acceptable: " + avgErrorDelta + ". Training finished after epochs " + epoch);
                 break;
             }
             errorTotal = 0.00;
@@ -331,13 +336,18 @@ public class NeuralNetwork implements Serializable
         return (sampleError/targets.size());
     }
 
-
-    private Double calcAverageGradient(List<Double> targets, List<Double> predicted)
+    /**
+     * Calculate
+     * @param targets
+     * @param predicted
+     * @return
+     */
+    private Double calcAverageErrorDelta(List<Double> targets, List<Double> predicted)
     {
         Double avgGrad = 0.00;
         for(int i=0; i<targets.size(); i++)
         {
-            avgGrad = Loss.derivatives.get(getOutputLayer().costFunction).apply(targets.get(i), predicted.get(i));
+            avgGrad += Math.abs(Loss.derivatives.get(getOutputLayer().costFunction).apply(targets.get(i), predicted.get(i)));
         }
         return (avgGrad/targets.size());
     }
@@ -442,8 +452,8 @@ public class NeuralNetwork implements Serializable
             {
                 fileName += "-" + l.getNeuronList().size();
             }
-            //DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmm");
-            //fileName += "-" + formatter.format(LocalDateTime.now()) + "batch-" + batchSize + "-epochs-" + epochSize + ".ann";
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmm");
+            fileName += "-" + formatter.format(LocalDateTime.now());
             fileName += "-batch-size-" + batchSize + "-epochs-" + epochSize + ".ann";
             ByteArrayOutputStream stream = serialize();
             FileOutputStream fileOutputStream = new FileOutputStream(fileName);

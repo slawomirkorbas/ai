@@ -32,7 +32,10 @@ public class GameController
     BoardDto predictNextMove(@RequestBody BoardDto boardDto, @RequestParam String userFigure)
     {
         BoardCell nextMoveCell = annTicTacToeAgent.getNextMove(boardDto.board);
-        boardDto.board[nextMoveCell.row][nextMoveCell.col] = userFigure.equals("x") ? "o" : "x";
+        if(nextMoveCell != null)
+        {
+            boardDto.board[nextMoveCell.row][nextMoveCell.col] = userFigure.equals("x") ? "o" : "x";
+        }
         return boardDto;
     }
 }

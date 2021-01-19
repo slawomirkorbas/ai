@@ -8,6 +8,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
 
 class GameGeneratorSpec extends Specification
 {
@@ -20,18 +23,20 @@ class GameGeneratorSpec extends Specification
             GameGenerator generator = new GameGenerator()
 
         when:
-            List<TicTacToeGame> totalGames = generator.generateGames(playerX, playerO, 2000)
+            List<TicTacToeGame> totalGames = generator.generateGames(playerX, playerO, 20000)
         then:
             totalGames.size() > 0
         and:
             // save to file as JSON
-            File file = new File("game-batch-" + gameName + "-" + totalGames.size() + ".json")
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmm")
+            File file = new File(formatter.format(LocalDateTime.now()) + "-game-batch-" + gameName + "-" + totalGames.size() + ".json")
             mapper.writeValue(file, totalGames)
 
         where:
             playerX                          | playerO                       | gameName
-            new MinMaxTicTacToeAgent("x") | new MinMaxTicTacToeAgent("o") | "mmX-vs-mmO"
-            //new MinMaxTicTacToeAgent("x")    | new RandomTicTacToeAgent("o") | "mmX-vs-rndO"
+            //new MinMaxTicTacToeAgent("x") | new MinMaxTicTacToeAgent("o") | "mmX-vs-mmO"
+            new MinMaxTicTacToeAgent("x")    | new RandomTicTacToeAgent("o") | "mmX-vs-rndO"
+            new MinMaxTicTacToeAgent("o")    | new RandomTicTacToeAgent("x") | "mmO-vs-rndX"
             //new RandomTicTacToeAgent("x")    | new RandomTicTacToeAgent("o") | "rndX-vs-rndO"
     }
 }

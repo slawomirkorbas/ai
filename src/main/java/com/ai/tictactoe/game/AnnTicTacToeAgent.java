@@ -61,6 +61,10 @@ public class AnnTicTacToeAgent extends TicTacToeAgent
     @Override
     public BoardCell getNextMove(final String[][] board)
     {
+        if(matrixFull(board))
+        {
+            return null;
+        }
         return predictNextMove(board);
     }
 
@@ -86,19 +90,20 @@ public class AnnTicTacToeAgent extends TicTacToeAgent
         else
         {
             //pick most rated field from the list
-            int highRatedFieldIndex = 0;
-            double max = -1000000.0;
+            Integer topRankedFieldIndex = null;
+            double max = -10000000.0;
             for(int i = 0; i < outputVector.size(); i++)
             {
-                if(max < outputVector.get(i))
+                BoardCell cell = cellIndex2CellMap.get(i); // get the highest ranked field freom output vector which is not occupied on the board
+                if(max < outputVector.get(i) ) //&& board[cell.row][cell.col].trim().isEmpty())
                 {
                     max = outputVector.get(i);
-                    highRatedFieldIndex = i;
+                    topRankedFieldIndex = i;
                 }
             }
 
             //maps cell index to Tic-Tac-Toe board coordinates
-            return cellIndex2CellMap.get(highRatedFieldIndex);
+            return cellIndex2CellMap.get(topRankedFieldIndex);
         }
     }
 
