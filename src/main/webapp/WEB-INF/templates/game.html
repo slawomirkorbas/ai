@@ -6,7 +6,7 @@
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
         <!-- Add icon library -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-        <title>Tic-Tac-Toe</title>
+        <title>Tic-Tac-Toe AI based game</title>
         <style type="text/css">
             div { margin: 5px;}
             table{ table-layout:fixed; }
@@ -21,6 +21,9 @@
                 font-family: "Arial";
                 font-size: 40px;
                 cursor: pointer;
+            }
+            td {
+                border: 1px solid black;
             }
             td.tttField:hover {
                 background-color: Aquamarine;
@@ -42,39 +45,56 @@
 
     </head>
 <body>
-    <div class="container">
-        <h1>Tic-Tac-Toe - Neural Network Test</h1>
 
-        <div class="row">
-            <div class="col-3">
-                <table>
-                    <tr>
-                        <td class="tttField border border-0" id="0_0"></td>
-                        <td class="tttField border border-top-0" id="0_1"></td>
-                        <td class="tttField border border-0" id="0_2"></td>
-                    </tr>
-                    <tr>
-                        <td class="tttField border border-left-0" id="1_0"></td>
-                        <td class="tttField border" id="1_1"></td>
-                        <td class="tttField border border-right-0" id="1_2"></td>
-                    </tr>
-                    <tr>
-                        <td class="tttField border border-0" id="2_0"></td>
-                        <td class="tttField border border-bottom-0" id="2_1"></td>
-                        <td class="tttField border border-0" id="2_2"></td>
-                    </tr>
-                </table>
-            </div>
-            <div class="col-4">
-                <div class="row">
-                    <div class="col">
-                        <button class="btn-sm btn-primary" type="button" onclick="resetGame()">New game</button>
-                        <button class="btn-sm btn-primary" type="button" onclick="getComputerMove()">Computer starts</button>
-                    </div>
-                </div>
+    <header>
+        <div class="navbar navbar-dark bg-dark box-shadow">
+            <div class="container d-flex justify-content-between">
+                <a href="#" class="navbar-brand d-flex align-items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                    <strong>Tic-Tac-Toe neural network based online game</strong>
+                </a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarHeader" aria-controls="navbarHeader" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
             </div>
         </div>
+    </header>
 
+
+    <main role="main">
+        <section class="jumbotron text-center">
+            <div class="container">
+                <h1 class="jumbotron-heading">Play game</h1>
+                <p class="lead text-muted">Tic-Tac-Toe ("Noughts and Crosses")</p>
+                <div class="row justify-content-center">
+                    <table>
+                        <tr>
+                            <td class="tttField border-dark border-0" id="0_0"></td>
+                            <td class="tttField border-dark border-top-0" id="0_1"></td>
+                            <td class="tttField border-dark border-0" id="0_2"></td>
+                        </tr>
+                        <tr>
+                            <td class="tttField border-dark border-left-0" id="1_0"></td>
+                            <td class="tttField border-dark" id="1_1"></td>
+                            <td class="tttField border-dark border-right-0" id="1_2"></td>
+                        </tr>
+                        <tr>
+                            <td class="tttField border-dark border-0" id="2_0"></td>
+                            <td class="tttField border-dark border-bottom-0" id="2_1"></td>
+                            <td class="tttField border-dark border-0" id="2_2"></td>
+                        </tr>
+                    </table>
+                </div>
+                    <p>
+                        <a href="#" class="btn btn-primary my-2" type="button" onclick="resetGame()">New game</a>
+                        <a href="#" class="btn btn-secondary my-2" type="button" onclick="getComputerMove()">Computer starts</a>
+                    </p>
+                </div>
+            </div>
+        </section>
+    <main>
+
+    <div class="container">
         <!--Copyright-->
         <div class="footer-copyright py-3">
             © 2020 Copyright: Slawomir Korbas
