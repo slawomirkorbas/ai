@@ -25,6 +25,14 @@
             td.tttField:hover {
                 background-color: Aquamarine;
             }
+            .hero-image {
+                background-image: url("/images/neuralnets-678x381.jpg"); /* The image used */
+                background-color: white; /* Used if the image is unavailable */
+                height: 381px; /* You must set a specified height */
+                background-position: center; /* Center the image */
+                background-repeat: no-repeat; /* Do not repeat the image */
+                background-size: cover; /* Resize the background image to cover the entire container */
+            }
         </style>
         <!-- Optional JavaScript -->
         <!-- jQuery first, then Popper.js, then Bootstrap JS -->
@@ -80,7 +88,7 @@
         $(".tttField").click(function() {
             var cords = $(this).attr('id').split("_");
             if( boardDto.board[parseInt(cords[0])][parseInt(cords[1])].trim() == "" &&
-                boardDto.result == null)
+                boardDto.result == "CONTINUE")
             {
                 boardDto.board[parseInt(cords[0])][parseInt(cords[1])] = userFigure;
                 updateBoard(boardDto);
@@ -111,16 +119,6 @@
 
         function updateBoard(boardDto)
         {
-            $("#0_0").html(boardDto.board[0][0]);
-            $("#0_1").html(boardDto.board[0][1]);
-            $("#0_2").html(boardDto.board[0][2]);
-            $("#1_0").html(boardDto.board[1][0]);
-            $("#1_1").html(boardDto.board[1][1]);
-            $("#1_2").html(boardDto.board[1][2]);
-            $("#2_0").html(boardDto.board[2][0]);
-            $("#2_1").html(boardDto.board[2][1]);
-            $("#2_2").html(boardDto.board[2][2]);
-
             for( var row = 0; row < boardDto.board.length; row++ ) {
                 for( var col = 0; col < boardDto.board.length; col++ ) {
                     $('#' + row + "_" + col).html(boardDto.board[row][col]);

@@ -22,12 +22,17 @@ public abstract class TicTacToeAgent
      */
     public GameResult doMove(final String[][] board)
     {
-        BoardCell nextMove = this.getNextMove(board);
-        if(nextMove != null)
+        GameResult result = gameState(board);
+        if(result == GameResult.CONTINUE)
         {
-            board[nextMove.row][nextMove.col] = this.playAs;
+            BoardCell nextMove = this.getNextMove(board);
+            if(nextMove != null)
+            {
+                board[nextMove.row][nextMove.col] = this.playAs;
+                result = gameState(board);
+            }
         }
-        return gameState(board);
+        return result;
     }
 
     /**

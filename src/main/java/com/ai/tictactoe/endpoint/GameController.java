@@ -31,11 +31,7 @@ public class GameController
     @PostMapping("/tictactoe/predict")//(name = "/tictactoe/predict", produces = MediaType.APPLICATION_JSON_VALUE)
     BoardDto predictNextMove(@RequestBody BoardDto boardDto, @RequestParam String userFigure)
     {
-        BoardCell nextMoveCell = annTicTacToeAgent.getNextMove(boardDto.board);
-        if(nextMoveCell != null)
-        {
-            boardDto.board[nextMoveCell.row][nextMoveCell.col] = userFigure.equals("x") ? "o" : "x";
-        }
+        boardDto.result = annTicTacToeAgent.doMove(boardDto.board);
         return boardDto;
     }
 }

@@ -27,8 +27,8 @@ public class TicTacToeConfiguration implements WebMvcConfigurer
     AnnTicTacToeAgent annTicTacToeAgent()
     {
         AnnTicTacToeAgent ann =  new AnnTicTacToeAgent("x");
+        //ann.init("net-18-15-12-9-20210120-0840-batch-size-630-epochs-1418.ann");
         ann.init("net-27-36-9-20210119-0853-batch-size-630-epochs-1353.ann");
-
         return ann;
     }
 
@@ -67,5 +67,6 @@ public class TicTacToeConfiguration implements WebMvcConfigurer
     {
         registry.addResourceHandler("/js/**").addResourceLocations("classpath:/static/js/");
         registry.addResourceHandler("/css/**").addResourceLocations("classpath:/static/css/");
+        registry.addResourceHandler("/images/**").addResourceLocations("classpath:/static/images/");
     }
 }

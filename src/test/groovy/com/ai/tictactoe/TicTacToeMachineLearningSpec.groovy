@@ -34,12 +34,18 @@ class TicTacToeMachineLearningSpec extends Specification
     def 'File based supervised learning using JSON file with stored tic-tac-toe plays'()
     {
         given:
-            NeuralNetwork ann = nnf.build()
-                    .input(27, "I")
-                    .hidden(36, "H1", 0.1d, TransferFunction.TANH)
-                    //.hidden(12, "H2", 0.1d, TransferFunction.TANH)
-                    .output(9 , "O" , 0.1d, TransferFunction.SOFTMAX, CostFunction.CROSS_ENTROPY)
-                    .initialize(WeightInitType.RANDOM)
+//            NeuralNetwork ann = nnf.build()
+//                    .input(27, "I")
+//                    .hidden(36, "H1", 0.1d, TransferFunction.TANH)
+//                    //.hidden(12, "H2", 0.1d, TransferFunction.TANH)
+//                    .output(9 , "O" , 0.1d, TransferFunction.SOFTMAX, CostFunction.CROSS_ENTROPY)
+//                    .initialize(WeightInitType.RANDOM)
+        NeuralNetwork ann = nnf.build()
+                .input(18, "I")
+                .hidden(15, "H1", 0.1d, TransferFunction.TANH)
+                .hidden(12, "H2", 0.1d, TransferFunction.TANH)
+                .output(9 , "O" , 0.1d, TransferFunction.SOFTMAX, CostFunction.CROSS_ENTROPY)
+                .initialize(WeightInitType.RANDOM)
         and:
             int totalEpochs = 0
             // create datasets eg. 200 games per each chunk
@@ -49,8 +55,6 @@ class TicTacToeMachineLearningSpec extends Specification
             List<DataSet> dataSets_2 = prepareDatasetsFromFile("20210118-2323-game-batch-mmX-vs-rndO-315.json", 100,
                     ann.getInputLayer().numberOfNeurons(),
                     ann.getOutputLayer().numberOfNeurons())
-
-
 
         when:
             dataSets_1.forEach( dataSet -> {
@@ -148,12 +152,17 @@ class TicTacToeMachineLearningSpec extends Specification
     }
 
 
+    /**
+     * Performance test of TicTacToe player based on ANN vs random TicTacToe player
+     * @return
+     */
     def 'Performance test of specific ANN TicTacToe Agent against RandomTicTacToeAgent'()
     {
         given:
             RandomTicTacToeAgent randomPlayer = new RandomTicTacToeAgent("o")
             AnnTicTacToeAgent annPlayer = new AnnTicTacToeAgent("x")
-            annPlayer.init("net-27-36-9-20210119-0853-batch-size-630-epochs-1353.ann")
+            annPlayer.init("net-18-15-12-9-20210120-0840-batch-size-630-epochs-1418.ann")
+            //annPlayer.init("net-27-36-9-20210119-0853-batch-size-630-epochs-1353.ann")
         and:
             int wins = 0, draws = 0, losses = 0
             Integer gamesTotal = 10000
