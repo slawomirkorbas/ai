@@ -54,17 +54,6 @@ dependencies {
     implementation('commons-io:commons-io:2.7')
     implementation('org.jgrapht:jgrapht-core:1.5.0')
     implementation('org.jgrapht:jgrapht-ext:1.5.0')
-
-    //DeepLearningLibrary for Java (Alternative for comparing results)
-    implementation('org.nd4j:nd4j-native-platform:1.0.0-beta6')
-    implementation('org.nd4j:nd4j-common:1.0.0-beta6')
-    implementation('org.nd4j:nd4j-api:1.0.0-beta6')
-    implementation('org.deeplearning4j:deeplearning4j-core:1.0.0-beta6')
-    implementation('org.deeplearning4j:deeplearning4j-nlp:1.0.0-beta6')
-    implementation('org.deeplearning4j:deeplearning4j-nn:1.0.0-beta6')
-
-
-
 }
 
 test {
