@@ -94,8 +94,8 @@ public class AnnTicTacToeAgent extends TicTacToeAgent
             double max = -10000000.0;
             for(int i = 0; i < outputVector.size(); i++)
             {
-                BoardCell cell = cellIndex2CellMap.get(i); // get the highest ranked field freom output vector which is not occupied on the board
-                if(max < outputVector.get(i) ) //&& board[cell.row][cell.col].trim().isEmpty())
+                BoardCell cell = cellIndex2CellMap.get(i); // get the highest ranked field from output vector which is not occupied on the board
+                if(max < outputVector.get(i) && board[cell.row][cell.col].trim().isEmpty())
                 {
                     max = outputVector.get(i);
                     topRankedFieldIndex = i;
