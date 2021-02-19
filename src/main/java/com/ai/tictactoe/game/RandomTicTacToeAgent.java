@@ -36,7 +36,7 @@ public class RandomTicTacToeAgent extends TicTacToeAgent
             }
             if( freeCells.size() > 0)
             {
-                freeCell = freeCells.get( freeCells.size() == 1 ? 0 : (new Random()).nextInt(freeCells.size() - 1));
+                freeCell = freeCells.get(freeCells.size() == 1 ? 0 : (new Random()).nextInt(freeCells.size()));
             }
         }
         return freeCell;
