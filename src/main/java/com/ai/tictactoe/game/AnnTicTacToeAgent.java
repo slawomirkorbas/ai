@@ -58,6 +58,15 @@ public class AnnTicTacToeAgent extends TicTacToeAgent
         ann = NeuralNetwork.deserialize(annFileName);
     }
 
+    /**
+     * Init internal ANN object
+     * @param trainedNetwork
+     */
+    public void init(final NeuralNetwork trainedNetwork)
+    {
+        ann = trainedNetwork;
+    }
+
     @Override
     public BoardCell getNextMove(final String[][] board)
     {

@@ -303,7 +303,7 @@ public class NeuralNetwork implements Serializable
             }
             System.out.println("Avg error delta after epochs("+ epoch + "): " + avgErrorDelta);
 
-            //TODO: make sure if it is not a local minimum!
+            //TODO: make sure if it is not a local minimum...
             if(epoch >= 2 &&  avgErrorDelta < 0.1 )
             {
                 // Training for given data set can be stopped when the minimum (close to "0")
@@ -337,7 +337,8 @@ public class NeuralNetwork implements Serializable
     }
 
     /**
-     * Calculate
+     * Calculate average delta error for specific sample
+     *
      * @param targets
      * @param predicted
      * @return
@@ -447,7 +448,7 @@ public class NeuralNetwork implements Serializable
     {
         try
         {
-            String fileName = "net";
+            String fileName = "trained-ann-models/net";
             for(Layer l : this.layers)
             {
                 fileName += "-" + l.getNeuronList().size();
@@ -455,6 +456,29 @@ public class NeuralNetwork implements Serializable
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmm");
             fileName += "-" + formatter.format(LocalDateTime.now());
             fileName += "-batch-size-" + batchSize + "-epochs-" + epochSize + ".ann";
+            ByteArrayOutputStream stream = serialize();
+            FileOutputStream fileOutputStream = new FileOutputStream(fileName);
+            fileOutputStream.write(stream.toByteArray());
+            fileOutputStream.close();
+            return fileName;
+        }
+        catch(IOException e)
+        {
+            return null;
+        }
+    }
+
+    public String serializeToFile(Double performance)
+    {
+        try
+        {
+            String fileName = "trained-ann-models/net";
+            for(Layer l : this.layers)
+            {
+                fileName += "-" + l.getNeuronList().size();
+            }
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmm");
+            fileName += "-performance-" + performance + ".ann";
             ByteArrayOutputStream stream = serialize();
             FileOutputStream fileOutputStream = new FileOutputStream(fileName);
             fileOutputStream.write(stream.toByteArray());

@@ -16,27 +16,28 @@ class GameGeneratorSpec extends Specification
 {
 
     @Unroll
-    def "generateGames: plays MinMax vs Random and store games in JSON format"() throws IOException
+    def "generateGames: play tic-tac-toe games using various agents and store results in JSON file"() throws IOException
     {
         given:
             ObjectMapper mapper = new ObjectMapper()
             GameGenerator generator = new GameGenerator()
 
         when:
-            List<TicTacToeGame> totalGames = generator.generateGames(playerX, playerO, 20000)
+            List<TicTacToeGame> totalGames = generator.generateGames(playerX, playerO, 50000)
         then:
             totalGames.size() > 0
         and:
             // save to file as JSON
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmm")
-            File file = new File(formatter.format(LocalDateTime.now()) + "-game-batch-" + gameName + "-" + totalGames.size() + ".json")
+            File file = new File("game-batches-json/" + formatter.format(LocalDateTime.now()) + "-game-batch-" + gameName + "-" + totalGames.size() + ".json")
             mapper.writeValue(file, totalGames)
 
         where:
             playerX                          | playerO                       | gameName
             //new MinMaxTicTacToeAgent("x") | new MinMaxTicTacToeAgent("o") | "mmX-vs-mmO"
-            new MinMaxTicTacToeAgent("x")    | new RandomTicTacToeAgent("o") | "mmX-vs-rndO"
-            new MinMaxTicTacToeAgent("o")    | new RandomTicTacToeAgent("x") | "mmO-vs-rndX"
-            //new RandomTicTacToeAgent("x")    | new RandomTicTacToeAgent("o") | "rndX-vs-rndO"
+            //new MinMaxTicTacToeAgent("x")    | new RandomTicTacToeAgent("o") | "mmX-vs-rndO"
+            //new MinMaxTicTacToeAgent("o")    | new RandomTicTacToeAgent("x") | "mmO-vs-rndX"
+            new RandomTicTacToeAgent("x")    | new RandomTicTacToeAgent("o") | "rndX-vs-rndO"
+            new RandomTicTacToeAgent("o")    | new RandomTicTacToeAgent("x") | "rndO-vs-rndX"
     }
 }

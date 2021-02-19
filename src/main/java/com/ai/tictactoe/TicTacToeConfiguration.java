@@ -27,8 +27,7 @@ public class TicTacToeConfiguration implements WebMvcConfigurer
     AnnTicTacToeAgent annTicTacToeAgent()
     {
         AnnTicTacToeAgent ann =  new AnnTicTacToeAgent("x");
-        ann.init("net-27-36-9-20210219-1133-batch-size-1233-epochs-2589.ann");
-        //ann.init("net-27-36-9-20210119-0853-batch-size-630-epochs-1353.ann");
+        ann.init("trained-ann-models/net-27-36-27-18-9-performance-96.54.ann");
         return ann;
     }
 
